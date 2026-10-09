@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Magnific 放大参数推荐器</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --line:#e4e7ec; --line2:#eef0f4;
+  --tx:#15171c; --tx2:#5a6474; --tx3:#8d97a6;
+  --ac:#6d4aff; --ac2:#8f75ff; --acbg:#f3f0ff;
+  --ok:#0d9488; --okbg:#e6f7f5; --warn:#c2410c; --warnbg:#fff4ec; --bad:#dc2626; --badbg:#fef2f2;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--tx);
+  font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 20px 60px}
+header.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+header.top h1{font-size:20px;margin:0;letter-spacing:-.3px}
+header.top .sub{color:var(--tx2);font-size:13px}
+.grid{display:grid;grid-template-columns:392px minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:1080px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;margin-bottom:16px}
+.card h2{font-size:13px;margin:0 0 12px;color:var(--tx2);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+
+/* drop zone */
+#drop{border:1.5px dashed #cfd4dd;border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfc}
+#drop:hover,#drop.over{border-color:var(--ac);background:var(--acbg)}
+#drop .big{font-size:15px;font-weight:600;margin-bottom:4px}
+#drop .sm{font-size:12px;color:var(--tx3)}
+#fileinfo{font-size:12px;color:var(--tx2);margin-top:10px;word-break:break-all}
+#preview{margin-top:12px;display:none}
+#preview img{width:100%;border-radius:8px;border:1px solid var(--line);display:block;cursor:zoom-in}
+#preview.actual img{width:auto;max-width:none;max-height:70vh;overflow:auto}
+.pvwrap{max-height:360px;overflow:auto;border-radius:8px}
+.pvwrap.actual{max-height:70vh}
+
+/* metrics */
+.mrow{margin-bottom:9px}
+.mtop{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.mtop b{font-weight:600}
+.mtop span{color:var(--tx2);font-variant-numeric:tabular-nums}
+.mbar{height:5px;border-radius:3px;background:#eceef2;overflow:hidden;position:relative}
+.mbar i{display:block;height:100%;border-radius:3px;background:var(--ac)}
+.mbar i.ok{background:var(--ok)} .mbar i.warn{background:#f59e0b} .mbar i.bad{background:#ef4444}
+.mhint{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--tx2);transition:.12s;user-select:none}
+.chip:hover{border-color:var(--ac2);color:var(--ac)}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.chip.auto{border-style:dashed}
+.chip .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ok);margin-right:5px;vertical-align:middle}
+
+/* verdict */
+.verdict{border-radius:var(--r);padding:14px 16px;border:1px solid var(--line);background:#fff;display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.verdict .vt{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.verdict .vd{font-size:12.5px;color:var(--tx2);margin-top:3px}
+.conf{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--line2);color:var(--tx2);white-space:nowrap}
+.conf.high{background:var(--okbg);color:#0b6b62}
+.conf.mid{background:var(--warnbg);color:var(--warn)}
+.conf.low{background:var(--badbg);color:var(--bad)}
+
+/* 引擎路由 */
+.rtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+.rbadge{font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap}
+.rbadge.h{background:var(--okbg);color:#0b6b62;border:1px solid #9fd8d0}
+.rbadge.m{background:var(--acbg);color:var(--ac);border:1px solid #cec2ff}
+.rbadge.tie{background:var(--warnbg);color:var(--warn);border:1px solid #f3cdb0}
+.rscore{font-size:11.5px;color:var(--tx3);font-family:ui-monospace,Consolas,monospace}
+.rwhy{font-size:12.5px;line-height:1.7;color:var(--tx2);margin:0 0 4px}
+.rwhy b{color:var(--tx)}
+.rtab{width:100%;border-collapse:collapse;margin-top:2px}
+.rtab td{padding:6px 0;vertical-align:top;border-top:1px dashed var(--line);font-size:12.5px;line-height:1.6}
+.rtab tr:first-child td{border-top:0}
+.rtab td.rk{width:168px;padding-right:12px;font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;color:var(--ac);font-weight:600;white-space:nowrap}
+.rtab td.rv{width:104px;padding-right:12px;font-weight:700;color:var(--tx);white-space:nowrap}
+.rtab td.rd{color:var(--tx2)}
+.rsub{font-size:12px;color:var(--tx3);font-weight:600;letter-spacing:.3px;margin:13px 0 3px}
+.rsub:first-child{margin-top:0}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:14px;background:#eceef2;padding:4px;border-radius:10px;width:fit-content}
+.tab{padding:7px 18px;border-radius:7px;font-size:13.5px;cursor:pointer;color:var(--tx2);font-weight:600;border:0;background:transparent;transition:.13s}
+.tab.on{background:#fff;color:var(--tx);box-shadow:0 1px 3px rgba(16,24,40,.1)}
+.tab .tag{font-size:10.5px;font-weight:600;color:var(--ac);margin-left:5px}
+
+/* params */
+.param{padding:12px 0;border-bottom:1px solid var(--line2)}
+.param:last-child{border-bottom:0}
+.param.hide{display:none}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pname{font-weight:700;font-size:12.5px;letter-spacing:.3px}
+.pval{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ac)}
+.pval.sel{font-size:13px}
+select{font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--tx);min-width:190px;max-width:100%}
+input[type=range]{width:100%;margin:9px 0 2px;-webkit-appearance:none;appearance:none;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,#eceef2 0%,#e3e6ec 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--ac);border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.22);margin-top:-6px}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:#eceef2}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--ac);border:2.5px solid #fff}
+.pr{display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--tx3);margin-top:2px;flex-wrap:wrap}
+.pr .rec{background:var(--acbg);color:var(--ac);border-radius:20px;padding:2px 9px;font-weight:600}
+.pr button{font:inherit;font-size:11.5px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:2px 9px;cursor:pointer;color:var(--tx2)}
+.pr button:hover{border-color:var(--ac);color:var(--ac)}
+.pr button:disabled{opacity:.4;cursor:default}
+.phint{font-size:11.5px;color:var(--tx3);margin-top:5px;line-height:1.55}
+textarea{width:100%;min-height:92px;font:12.5px/1.6 ui-monospace,Consolas,Menlo,monospace;padding:10px;border:1px solid var(--line);border-radius:9px;resize:vertical;color:var(--tx);background:#fbfcfd}
+
+/* notes */
+.note{display:flex;gap:9px;padding:9px 11px;border-radius:9px;font-size:12.5px;line-height:1.6;margin-bottom:7px;background:#f7f8fa;color:var(--tx2)}
+.note.w{background:var(--warnbg);color:#8a3c0c}
+.note.b{background:var(--badbg);color:#991b1b}
+.note.g{background:var(--okbg);color:#0b6b62}
+.note .ic{flex:0 0 auto;font-weight:700}
+.plan{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fbfcfd}
+.plan h4{margin:0 0 7px;font-size:13px}
+.plan .line{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;color:var(--tx2);margin:3px 0;word-break:break-all}
+.plan .line b{color:var(--ac);font-weight:700}
+.plan .why{font-size:11.5px;color:var(--tx3);margin-top:6px}
+.plan h4 .badge{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;margin-left:8px;vertical-align:1px}
+.plan h4 .badge.c{background:var(--acbg);color:var(--ac)}
+.plan h4 .badge.p{background:#e6f7f5;color:#0b6b62}
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 15px;cursor:pointer;color:var(--tx)}
+.btn:hover{border-color:var(--ac);color:var(--ac)}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.primary:hover{background:#5c3bea;color:#fff}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.foot{color:var(--tx3);font-size:11.5px;line-height:1.7;margin-top:6px}
+.empty{color:var(--tx3);font-size:13px;padding:24px 0;text-align:center}
+#toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);background:#15171c;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:99}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.kv{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line2)}
+.kv:last-child{border:0}
+.kv span:first-child{color:var(--tx2)}
+.kv span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+
+/* 本地视觉模型 */
+.vrow{display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+.vrow>label{font-size:12.5px;color:var(--tx2);min-width:58px}
+.vrow input[type=text]{flex:1;min-width:140px;font:12px/1.5 ui-monospace,Consolas,Menlo,monospace;
+  padding:6px 9px;border:1px solid var(--line);border-radius:8px;color:var(--tx);background:#fff}
+.sw{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:13px;font-weight:600}
+.sw input{width:16px;height:16px;accent-color:var(--ac);cursor:pointer}
+.vstatus{font-size:12px;line-height:1.6;margin-top:4px}
+.vstatus.ok{color:#0b6b62} .vstatus.err{color:#991b1b} .vstatus.warn{color:var(--warn)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);
+  border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.vtag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+  background:var(--acbg);color:var(--ac);margin:3px 4px 0 0;font-weight:600}
+.vbox{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fbfcfd;margin-top:10px}
+.vbox .k{font-size:11.5px;color:var(--tx3);margin-bottom:2px}
+.vbox .v{font-size:13px;margin-bottom:9px}
+.vbox .v:last-child{margin-bottom:0}
+.chip .mdot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ac);margin-right:5px;vertical-align:middle}
+.mono{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:11.5px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Magnific 放大参数推荐器</h1>
+    <div class="sub">上传图片 → 自动体检画面 → 先判该用 Hildegard 还是 Magnific → 再给出对应参数</div>
+  </header>
+
+  <div class="grid">
+    <!-- ============ LEFT ============ -->
+    <div>
+      <div class="card">
+        <h2>1 · 上传图片</h2>
+        <div id="drop">
+          <div class="big">点击选择图片，或拖拽 / 粘贴到这里</div>
+          <div class="sm">只在本地浏览器里分析，图片不会上传到任何地方</div>
+          <input type="file" id="file" accept="image/*" hidden>
+        </div>
+        <div id="fileinfo"></div>
+        <div id="preview"><div class="pvwrap" id="pvwrap"><img id="pimg" alt=""></div></div>
+      </div>
+
+      <div class="card" id="mcard" style="display:none">
+        <h2>2 · 画面体检</h2>
+        <div id="metrics"></div>
+        <div class="foot" id="mfoot"></div>
+      </div>
+
+      <div class="card" id="tcard" style="display:none">
+        <h2>3 · 内容类型</h2>
+        <div class="chips" id="chips"></div>
+        <div class="foot" id="typehint"></div>
+      </div>
+
+      <div class="card">
+        <h2>4 · 本地视觉模型（可选）</h2>
+        <div class="vrow">
+          <label class="sw"><input type="checkbox" id="vlmOn"> 启用</label>
+          <span class="foot" style="margin:0">让本机 LM Studio 看图，只负责判断「这是什么图」</span>
+        </div>
+        <div id="vlmBody" style="display:none">
+          <div class="vrow"><label>接口</label><input type="text" id="vlmUrl" spellcheck="false"></div>
+          <div class="vrow"><label>模型</label><input type="text" id="vlmModel" spellcheck="false"></div>
+          <div class="vrow" style="margin-bottom:4px">
+            <button class="btn" id="vlmTest" style="font-size:12px;padding:6px 12px">测试连接</button>
+            <label class="sw" style="font-weight:400;font-size:12.5px"><input type="checkbox" id="vlmAuto"> 自动采用模型判断的类型</label>
+          </div>
+          <div class="vstatus" id="vlmStatus"></div>
+          <div id="vlmResult"></div>
+        </div>
+        <div class="foot">纯本地推理，图片不会离开这台电脑。不启用也完全不影响上面的数值分析。</div>
+      </div>
+    </div>
+
+    <!-- ============ RIGHT ============ -->
+    <div>
+      <div id="out"><div class="card"><div class="empty">← 先上传一张图片，这里会给出推荐设置</div></div></div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   工具函数
+============================================================ */
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const r2 = v => Math.round(v*100)/100;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1600); }
+function med(arr){ if(!arr.length) return 0; const a=arr.slice().sort((x,y)=>x-y); const n=a.length; return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2; }
+function pct(arr,p){ if(!arr.length) return 0; const a=arr.slice().sort((x,y)=>x-y); return a[clamp(Math.round((a.length-1)*p),0,a.length-1)]; }
+
+/* ============================================================
+   一、图像分析
+   与 Python 原型逐条对齐（768px 全局统计 + 原分辨率 160px 图块统计）
+============================================================ */
+const ANALYZE_MAX = 768;
+
+function scaledRGBA(img, maxDim){
+  const s = Math.min(1, maxDim/Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth*s));
+  const h = Math.max(1, Math.round(img.naturalHeight*s));
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx = c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,w,h);
+  return {w,h,data:ctx.getImageData(0,0,w,h).data};
+}
+
+/* Immerkaer 噪声估计 */
+function immerkaer(L,w,h){
+  let sum=0,cnt=0;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      const g = L[i-w-1] - 2*L[i-w] + L[i-w+1]
+              - 2*L[i-1]  + 4*L[i]   - 2*L[i+1]
+              + L[i+w-1]  - 2*L[i+w] + L[i+w+1];
+      sum += g<0?-g:g; cnt++;
+    }
+  }
+  return cnt ? Math.sqrt(Math.PI/2)*sum/(6*cnt) : 0;
+}
+
+/* 重复周期检测：横/纵各找一个"错位后最像自己"的位移。
+   真·重复图案（墙布、花型、瓷砖、几何底纹）在周期处差值会塌成一个很深的谷；
+   平滑的模糊照片、渐变、绘画没有谷底——差值随位移单调上升，最小值永远落在最小位移上。
+   所以判据不能只看"最小值小"，必须看它比"非周期倍数的位移"低多少。 */
+function periodicity(L,w,h){
+  const step = Math.max(1, Math.round(w/320));      // 降采样，控制耗时
+  const ww = Math.floor(w/step), hh = Math.floor(h/step);
+  const G = new Float32Array(ww*hh);
+  for(let y=0;y<hh;y++) for(let x=0;x<ww;x++) G[y*ww+x]=L[y*step*w + x*step];
+  const mad=(dx,dy)=>{
+    let s=0,n=0;
+    for(let y=0;y<hh-dy;y++) for(let x=0;x<ww-dx;x++){
+      s+=Math.abs(G[y*ww+x]-G[(y+dy)*ww+x+dx]); n++;
+    }
+    return n? s/n/255 : 1;
+  };
+  const axis=(horiz)=>{
+    const lim = horiz ? Math.floor(ww/2.2) : Math.floor(hh/2.2);
+    const d0  = Math.max(2, Math.round(6/step));
+    const vals=[];
+    for(let d=d0; d<=lim; d++) vals.push([d, horiz?mad(d,0):mad(0,d)]);
+    if(vals.length<5) return {v:1,d:0,sharp:1};
+    let mn=vals[0][1], md=vals[0][0];
+    vals.forEach(v=>{ if(v[1]<mn){mn=v[1];md=v[0];} });
+    /* 参考值 = 所有"离 d 的整数倍够远"的位移里最小的差值。
+       真周期时这个参考值远大于谷底；非周期时两者差不多。 */
+    let ref=Infinity;
+    vals.forEach(v=>{
+      let off=false;
+      for(let k=1;k<=4;k++){ if(Math.abs(v[0]-k*md) <= 0.28*md*k){ off=true; break; } }
+      if(!off && v[1]<ref) ref=v[1];
+    });
+    if(!isFinite(ref)) ref=mn;
+    return {v:mn, d:md, sharp: mn/Math.max(1e-6,ref)};
+  };
+  const bx=axis(true), by=axis(false);
+  const pick = bx.sharp<=by.sharp ? bx : by;
+  return {x:bx.v, y:by.v, min:pick.v, sharp:pick.sharp,
+          dx:bx.d*step, dy:by.d*step};
+}
+
+/* JPEG 8x8 块效应 */
+function blockiness(L,w,h){
+  let bs=0,bc=0,is=0,ic=0;
+  for(let y=0;y<h;y++){
+    for(let x=1;x<w;x++){
+      const d=Math.abs(L[y*w+x]-L[y*w+x-1]);
+      if(x%8===0){bs+=d;bc++;} else {is+=d;ic++;}
+    }
+  }
+  for(let x=0;x<w;x++){
+    for(let y=1;y<h;y++){
+      const d=Math.abs(L[y*w+x]-L[(y-1)*w+x]);
+      if(y%8===0){bs+=d;bc++;} else {is+=d;ic++;}
+    }
+  }
+  const b=bc?bs/bc:0, i=ic?is/ic:0;
+  return i>1e-6 ? b/i : 1;
+}
+
+/* 拉普拉斯方差 */
+function lapvar(L,w,h){
+  let s=0,s2=0,c=0;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      const lap = 4*L[i]-L[i-w]-L[i+w]-L[i-1]-L[i+1];
+      s+=lap; s2+=lap*lap; c++;
+    }
+  }
+  if(!c) return 0;
+  const m=s/c; return Math.max(0, s2/c - m*m);
+}
+
+/* 3x3 中值滤波（用于把噪声从"真实细节"里剥出来） */
+function median3(L,w,h){
+  const out = new Float32Array(w*h);
+  for(let i=0;i<w*h;i++) out[i]=L[i];   // 边界保留原值，否则会造出假的强边缘
+  const b = new Float32Array(9);
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      let n=0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) b[n++]=L[i+dy*w+dx];
+      // 简单插入排序求中值
+      for(let a=1;a<9;a++){ const v=b[a]; let j=a-1; while(j>=0&&b[j]>v){b[j+1]=b[j];j--;} b[j+1]=v; }
+      out[i]=b[4];
+    }
+  }
+  return out;
+}
+
+/* 原分辨率图块统计 */
+function patchStats(img){
+  const W=img.naturalWidth, H=img.naturalHeight;
+  const PS=Math.min(160, W, H);
+  if(PS<48) return null;
+  const c=document.createElement('canvas'); c.width=PS; c.height=PS;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  const cols=Math.max(1,Math.floor(W/PS)), rows=Math.max(1,Math.floor(H/PS));
+  const sx=Math.max(1,Math.floor(cols/5)), sy=Math.max(1,Math.floor(rows/5));
+  const cand=[];
+  for(let j=0;j<rows;j+=sy){
+    for(let i=0;i<cols;i+=sx){
+      const x=Math.min(W-PS, i*PS), y=Math.min(H-PS, j*PS);
+      ctx.clearRect(0,0,PS,PS);
+      ctx.drawImage(img, x,y,PS,PS, 0,0,PS,PS);
+      const d=ctx.getImageData(0,0,PS,PS).data;
+      const L=new Float32Array(PS*PS);
+      let sum=0;
+      for(let k=0,p=0;k<PS*PS;k++,p+=4){
+        const l=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
+        L[k]=l; sum+=l;
+      }
+      const mean=sum/(PS*PS);
+      let v=0; for(let k=0;k<PS*PS;k++){const dd=L[k]-mean; v+=dd*dd;}
+      cand.push({std:Math.sqrt(v/(PS*PS)), mean, L});
+    }
+  }
+  if(!cand.length) return null;
+  let txt = cand.filter(c=>c.std>12 && c.std<90 && c.mean>20 && c.mean<240);
+  if(txt.length<3) txt = cand.slice().sort((a,b)=>b.std-a.std).slice(0, Math.max(3, Math.floor(cand.length/3)));
+  const sharpArr=[], blkArr=[], noiseArr=[], stdArr=[];
+  for(const p of txt){
+    const Lm = median3(p.L, PS, PS);
+    let s=0,sm=0; for(let k=0;k<PS*PS;k++){s+=Lm[k];}
+    sm=s/(PS*PS);
+    let vv=0; for(let k=0;k<PS*PS;k++){const dd=Lm[k]-sm; vv+=dd*dd;}
+    const stdM=Math.sqrt(vv/(PS*PS));
+    sharpArr.push(lapvar(Lm,PS,PS)/(stdM*stdM+1));
+    blkArr.push(blockiness(p.L,PS,PS));
+    noiseArr.push(immerkaer(p.L,PS,PS));
+    stdArr.push(p.std);
+  }
+  return {
+    sharp2: med(sharpArr),
+    blockiness: med(blkArr),
+    noiseTxt: pct(noiseArr,0.20),
+    texStd: med(stdArr),
+    nPatches: txt.length, nCand: cand.length
+  };
+}
+
+/* 主分析 */
+function analyzeImage(img){
+  const W0=img.naturalWidth, H0=img.naturalHeight;
+  const A=scaledRGBA(img, ANALYZE_MAX);
+  const d=A.data, w=A.w, h=A.h, n=w*h;
+  const lum=new Float32Array(n);
+  const hist=new Uint32Array(32768);
+  const lumHist=new Uint32Array(256);
+  let sumLum=0,sumSat=0,sRG=0,sYB=0,sRG2=0,sYB2=0,skin=0,green=0,blue=0,alphaLow=0;
+  for(let i=0,p=0;i<n;i++,p+=4){
+    const a=d[p+3]/255;
+    // 透明像素按白底合成，避免黑边污染统计
+    const r=d[p]*a+255*(1-a), g=d[p+1]*a+255*(1-a), b=d[p+2]*a+255*(1-a);
+    const l=0.299*r+0.587*g+0.114*b;
+    lum[i]=l; sumLum+=l; lumHist[clamp(l|0,0,255)]++;
+    const mx=r>g?(r>b?r:b):(g>b?g:b), mn=r<g?(r<b?r:b):(g<b?g:b);
+    sumSat += mx>0 ? (mx-mn)/mx : 0;
+    const rg=r-g, yb=0.5*(r+g)-b;
+    sRG+=rg; sYB+=yb; sRG2+=rg*rg; sYB2+=yb*yb;
+    hist[((r>>3)<<10)|((g>>3)<<5)|(b>>3)]++;
+    if(d[p+3]<250) alphaLow++;
+    const cb=128-0.168736*r-0.331264*g+0.5*b;
+    const cr=128+0.5*r-0.418688*g-0.081312*b;
+    if(cb>=77&&cb<=127&&cr>=133&&cr<=173&&r>g+6&&g>b-4&&l>45&&l<245) skin++;
+    if(g>r+12&&g>b+6) green++;
+    else if(b>r+12&&b>g+4) blue++;
+  }
+  const meanLum=sumLum/n;
+  let vv=0; for(let i=0;i<n;i++){const dd=lum[i]-meanLum; vv+=dd*dd;}
+  const contrast=Math.sqrt(vv/n);
+
+  const rgStd=Math.sqrt(Math.max(0,sRG2/n-(sRG/n)*(sRG/n)));
+  const ybStd=Math.sqrt(Math.max(0,sYB2/n-(sYB/n)*(sYB/n)));
+  const colorfulness=Math.sqrt(rgStd*rgStd+ybStd*ybStd)+0.3*Math.sqrt((sRG/n)*(sRG/n)+(sYB/n)*(sYB/n));
+
+  const hs=Array.from(hist).sort((a,b)=>b-a);
+  let t32=0; for(let i=0;i<32;i++) t32+=hs[i];
+  const top32=t32/n;
+  let uniq=0; for(let i=0;i<hist.length;i++) if(hist[i]) uniq++;
+
+  // Sobel（归一化：4*255 = 1020 为满幅）
+  const mag=new Float32Array(n);
+  let sumGrad=0, mN=0;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      const tl=lum[i-w-1],t=lum[i-w],tr=lum[i-w+1];
+      const ml=lum[i-1],mr=lum[i+1];
+      const bl=lum[i+w-1],b2=lum[i+w],br=lum[i+w+1];
+      const gx=(tr+2*mr+br)-(tl+2*ml+bl);
+      const gy=(bl+2*b2+br)-(tl+2*t+tr);
+      const m=Math.sqrt(gx*gx+gy*gy)/1020;
+      mag[i]=m; sumGrad+=m; mN++;
+    }
+  }
+  const meanGrad = mN?sumGrad/mN:0;
+  let f03=0,f006=0,f02=0;
+  for(let i=0;i<n;i++){ const m=mag[i]; if(m>0.03)f03++; if(m>0.06)f006++; if(m>0.2)f02++; }
+  const edgeDensity=f006/n, edgeConc=f03>0?f02/f03:0;
+
+  // 高频能量（1.0 sigma 高斯残差）
+  const blur=(src)=>{ // 两次 1-2-1 可分离卷积 ≈ sigma 1.0
+    let a=new Float32Array(src), b=new Float32Array(src.length);
+    for(let pass=0;pass<2;pass++){
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+        const i=y*w+x, x0=x>0?x-1:0, x1=x<w-1?x+1:w-1;
+        b[i]=(a[y*w+x0]+2*a[i]+a[y*w+x1])/4;
+      }
+      for(let x=0;x<w;x++) for(let y=0;y<h;y++){
+        const i=y*w+x, y0=y>0?y-1:0, y1=y<h-1?y+1:h-1;
+        a[i]=(b[y0*w+x]+2*b[i]+b[y1*w+x])/4;
+      }
+    }
+    return a;
+  };
+  const lb=blur(lum);
+  let hf=0; for(let i=0;i<n;i++) hf+=Math.abs(lum[i]-lb[i]);
+  hf/=n;
+  const hfRatio=hf/(contrast+1);
+
+  // 16x16 块标准差
+  const BS=16, bh=Math.floor(h/BS), bw=Math.floor(w/BS);
+  let flat=0, smooth=0, blocks=0;
+  if(bh>0&&bw>0){
+    for(let by=0;by<bh;by++) for(let bx=0;bx<bw;bx++){
+      let s=0,s2=0;
+      for(let y=0;y<BS;y++) for(let x=0;x<BS;x++){
+        const l=lum[(by*BS+y)*w+bx*BS+x]; s+=l; s2+=l*l;
+      }
+      const cnt=BS*BS, m=s/cnt, sd=Math.sqrt(Math.max(0,s2/cnt-m*m));
+      if(sd<4) flat++; else if(sd<16) smooth++;
+      blocks++;
+    }
+  }
+  const flatRatio=blocks?flat/blocks:0, smoothRatio=blocks?smooth/blocks:0;
+
+  // 肤色连通块（256px 上做）
+  const sw=256, sh=Math.max(1,Math.round(256*h/w));
+  const sc=document.createElement('canvas'); sc.width=sw; sc.height=sh;
+  const sctx=sc.getContext('2d',{willReadFrequently:true});
+  sctx.drawImage(img,0,0,sw,sh);
+  const sd=sctx.getImageData(0,0,sw,sh).data;
+  const mask=new Uint8Array(sw*sh);
+  let skinCnt=0;
+  for(let i=0,p=0;i<sw*sh;i++,p+=4){
+    const a=sd[p+3]/255;
+    const r=sd[p]*a+255*(1-a), g=sd[p+1]*a+255*(1-a), b=sd[p+2]*a+255*(1-a);
+    const l=0.299*r+0.587*g+0.114*b;
+    const cb=128-0.168736*r-0.331264*g+0.5*b;
+    const cr=128+0.5*r-0.418688*g-0.081312*b;
+    if(cb>=77&&cb<=127&&cr>=133&&cr<=173&&r>g+6&&l>45&&l<245){ mask[i]=1; skinCnt++; }
+  }
+  // 最大连通块
+  const seen=new Uint8Array(sw*sh);
+  let bestArea=0,bestW=1,bestH=1, secondArea=0, nBlob=0;
+  const st=new Int32Array(sw*sh);
+  const blobFloor=Math.max(4, Math.round(sw*sh*0.003));
+  for(let i0=0;i0<sw*sh;i0++){
+    if(!mask[i0]||seen[i0]) continue;
+    let sp=0; st[sp++]=i0; seen[i0]=1;
+    let cnt=0,minx=sw,maxx=0,miny=sh,maxy=0;
+    while(sp>0){
+      const idx=st[--sp]; cnt++;
+      const y=(idx/sw)|0, x=idx-y*sw;
+      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+      if(x>0   && mask[idx-1]&&!seen[idx-1]){seen[idx-1]=1;st[sp++]=idx-1;}
+      if(x<sw-1&& mask[idx+1]&&!seen[idx+1]){seen[idx+1]=1;st[sp++]=idx+1;}
+      if(y>0   && mask[idx-sw]&&!seen[idx-sw]){seen[idx-sw]=1;st[sp++]=idx-sw;}
+      if(y<sh-1&& mask[idx+sw]&&!seen[idx+sw]){seen[idx+sw]=1;st[sp++]=idx+sw;}
+    }
+    if(cnt>bestArea){ secondArea=bestArea; bestArea=cnt; bestW=maxx-minx+1; bestH=maxy-miny+1; }
+    else if(cnt>secondArea) secondArea=cnt;
+    if(cnt>=blobFloor) nBlob++;
+  }
+
+  const ps=patchStats(img);
+  const per=periodicity(lum,w,h);
+
+  return {
+    W:W0, H:H0, mp:W0*H0/1e6, aspect:W0/H0,
+    top32, uniq:uniq/n,
+    edgeDensity, edgeConc, meanGrad,
+    flatRatio, smoothRatio,
+    satMean:sumSat/n, colorfulness,
+    skinRatio:skin/n, skinBlobArea:bestArea/(sw*sh),
+    skinBlobShare:bestArea/Math.max(1,skinCnt),
+    skinBlobAR:bestW/Math.max(1,bestH),
+    skinBlobFill:bestArea/Math.max(1,bestW*bestH),
+    skinBlob2nd:secondArea/Math.max(1,bestArea),
+    skinBlobs:nBlob,
+    greenRatio:green/n, blueRatio:blue/n,
+    meanLum, contrast,
+    clip:(lumHist[0]+lumHist[1]+lumHist[2]+lumHist[253]+lumHist[254]+lumHist[255])/n,
+    hfRatio,
+    alphaRatio:alphaLow/n,
+    sharp2: ps?ps.sharp2:0,
+    blockiness: ps?ps.blockiness:1,
+    noiseTxt: ps?ps.noiseTxt:0,
+    texStd: ps?ps.texStd:0,
+    nPatches: ps?ps.nPatches:0,
+    perMin: per.min, perSharp: per.sharp, perDx: per.dx, perDy: per.dy
+  };
+}
+
+/* ============================================================
+   二、特征 → 判断标志
+============================================================ */
+function buildFlags(M){
+  const F={};
+  F.lineArt      = M.top32>0.82 && M.edgeConc>0.30 && M.flatRatio>0.28;
+  F.flatGraphic  = M.top32>0.82 && !F.lineArt;
+  F.graphic      = F.lineArt || F.flatGraphic;
+  F.illustration = !F.graphic && M.top32>0.55 && M.flatRatio>0.20;
+  F.heavyJPEG    = M.blockiness>1.30;
+  F.jpegFlag     = M.blockiness>1.22;
+  F.verySoft     = M.sharp2<0.09;
+  F.soft         = M.sharp2<0.16;
+  F.crisp        = M.sharp2>0.45;
+  F.lowRes       = M.mp<0.8;
+  F.hugeRes      = M.mp>12;
+  F.noisy        = M.noiseTxt>6.0 && M.blockiness>1.12;
+  F.grainy       = !F.noisy && M.noiseTxt>1.3 && M.noiseTxt<6.5 && M.blockiness<1.16 && M.sharp2>0.18;
+  F.dark         = M.meanLum<82;
+  F.moody        = F.dark && M.contrast>48;
+  F.flatTone     = M.contrast<24;
+  F.nature       = (M.greenRatio+M.blueRatio)>0.34 && M.skinRatio<0.10;
+  F.portrait     = !F.graphic && M.skinRatio>0.045 && M.skinBlobShare>0.45 && M.skinBlobArea<0.35
+                   && M.skinBlobAR>0.5 && M.skinBlobAR<1.45;
+  F.hasAlpha     = M.alphaRatio>0.008;
+  F.aiLike       = M.noiseTxt<2.0 && M.blockiness<1.08 && M.sharp2>0.18 && !F.graphic
+                   && (M.flatRatio>0.25 || M.top32>0.5);
+  /* 真·重复图案：周期处差值塌成深谷，且明显低于非周期倍数的位移 */
+  F.twoTone      = M.top32>0.95 && M.clip>0.85;
+  F.periodic     = M.perSharp<0.45 && M.perMin<0.16 && M.edgeDensity>0.02;
+  /* 人像：一个紧凑、占比不大、近似头肩比例的连通块。
+     木头/砖墙/暖色场景会造出很多零散暖色块，用"块数 + 填充率"排掉。 */
+  F.portrait     = !F.graphic && M.skinRatio>0.045 && M.skinBlobShare>0.45 && M.skinBlobArea<0.28
+                   && M.skinBlobAR>0.5 && M.skinBlobAR<1.45
+                   && M.skinBlobFill>0.48 && M.skinBlobs<=4;
+  return F;
+}
+
+/* ============================================================
+   三、内容类型预设
+   （花鸟画/国画一档直接采用你笔记里验证过的组合）
+============================================================ */
+const ENGINE_LABEL={automatic:'automatic',illusio:'illusio',sharpy:'sharpy',sparkle:'sparkle'};
+const OPT_LIST=['Standard Ultra','Portrait Soft','Portrait Hard','Art & Illustration','Videogame Assets','Nature & Landscapes','Films & Photography','3D Renders','Science Fiction & Horror'];
+const MODEL_LIST=['v2 (Sublime)','v2 (Photo)','v2 (Photo denoiser)','v1 (High HDR)'];
+
+const TYPES=[
+{k:'chinese', n:'花鸟画 / 国画', group:'art',
+ p:{model:'v2 (Photo)', sharpness:25, grain:4, ultraDetail:25},
+ c:{optimized:'Nature & Landscapes', creativity:-5, hdr:0, resemblance:8, fractality:0, engine:'illusio',
+    prompt:'(delicate brush strokes:1.15), (fine ink wash texture:1.15), natural silk and paper grain, original color palette, no invented details'},
+ plan:[
+   ['第一步','2x','Nature & Landscapes','-5','0','8','0','illusio','只补结构不添风格，保住墨色和留白'],
+   ['第二步','2x','Art & Illustration','0','1','7','1','sharpy','锐化定稿，把笔锋拉实']
+ ],
+ notes:['这套组合来自你自己的笔记（先 Nature -5 + Illusio，再 Art 0 + Sharpy），是验证过的。',
+        '墨色晕染最怕"凭空长笔触"：CREATIVITY 和 FRACTALITY 都要压住，HDR 也别高。']},
+
+{k:'oil', n:'油画 / 绘画作品', group:'art',
+ p:{model:'v2 (Photo)', sharpness:25, grain:5, ultraDetail:25},
+ c:{optimized:'Art & Illustration', creativity:0, hdr:1, resemblance:7, fractality:1, engine:'illusio',
+    prompt:'(visible brush strokes:1.15), (canvas weave texture:1.1), accurate pigment colors, preserve original composition'},
+ plan:[
+   ['第一步','2x','Art & Illustration','0','0','8','0','illusio','先把结构稳稳拉大'],
+   ['第二步','2x','Art & Illustration','0','1','7','1','sharpy','补笔触的锐度']
+ ],
+ notes:['笔触和画布纹理是画面内容，不要用 denoiser 抹掉。',
+        '拍画作常带反光和轻微色偏，放大前建议先校色。']},
+
+{k:'mural', n:'壁画 / 装饰画', group:'art',
+ p:{model:'v2 (Sublime)', sharpness:30, grain:0, ultraDetail:30},
+ c:{optimized:'Art & Illustration', creativity:1, hdr:2, resemblance:6, fractality:1, engine:'illusio',
+    prompt:'(crisp decorative detail:1.15), clean edges, (rich saturated colors:1.05), even surface, no added noise'},
+ plan:[
+   ['第一步','2x','Art & Illustration','0','1','7','0','illusio',''],
+   ['第二步','2x','Standard Ultra','1','2','6','1','sharpy','']
+ ],
+ notes:['壁画类往往本来分辨率就不低，先 2x 试，别一上来就 4x。']},
+
+{k:'illust', n:'插画 / 动漫', group:'art',
+ p:{model:'v2 (Photo)', sharpness:15, grain:0, ultraDetail:18},
+ c:{optimized:'Art & Illustration', creativity:1, hdr:2, resemblance:5, fractality:3, engine:'illusio',
+    prompt:'(clean line art:1.25), crisp outlines, flat color fills, no added photographic texture, keep colors flat'},
+ plan:[
+   ['第一步','2x','Art & Illustration','0','2','6','1','illusio',''],
+   ['第二步','2x','Art & Illustration','1','2','5','3','sparkle','']
+ ],
+ notes:['线稿/平涂最怕"加细节"：FRACTALITY 高会让线条长毛刺，ULTRA DETAIL 也要低。',
+        '如果画面有平涂色块，放大后出现噪点纹理就说明参数过头了。']},
+
+{k:'pattern', n:'图案 / 纹理', group:'art',
+ p:{model:'v2 (Photo)', sharpness:20, grain:0, ultraDetail:20},
+ c:{optimized:'Art & Illustration', creativity:0, hdr:1, resemblance:8, fractality:-2, engine:'illusio',
+    prompt:'(exact pattern repeat:1.2), (crisp fabric weave detail:1.1), flat even lighting, no new motifs, no texture noise'},
+ plan:[
+   ['第一步','2x','Art & Illustration','0','1','8','-2','illusio','重复图案优先保结构'],
+   ['第二步','2x','Art & Illustration','0','1','7','0','sparkle','']
+ ],
+ notes:['重复图案最容易在接缝处露馅：RESEMBLANCE 拉高、FRACTALITY 压到负数。',
+        '放大后务必检查四边接缝能不能对上。']},
+
+{k:'photo', n:'实景照片 / 室内', group:'photo',
+ p:{model:'v2 (Sublime)', sharpness:30, grain:7, ultraDetail:30},
+ c:{optimized:'Films & Photography', creativity:0, hdr:1, resemblance:6, fractality:-1, engine:'sparkle',
+    prompt:'(natural materials and textures:1.15), accurate perspective, (original color palette:1.1), realistic lighting, no added artifacts'},
+ plan:[
+   ['第一步','2x','Films & Photography','0','1','7','-1','sparkle',''],
+   ['第二步','2x','Standard Ultra','0','1','6','0','sharpy','']
+ ],
+ notes:['室内照有大量直线，FRACTALITY 别高，否则墙角、踢脚线会歪。',
+        '手机拍的室内照噪点多，先考虑 Precision v2 (Photo denoiser) 去一遍噪。']},
+
+{k:'portrait', n:'人像 / 人物照', group:'photo',
+ p:{model:'v2 (Photo)', sharpness:20, grain:8, ultraDetail:15},
+ c:{optimized:'Portrait Soft', creativity:0, hdr:1, resemblance:6, fractality:0, engine:'sparkle',
+    prompt:'(detailed natural skin texture:1.1), (sharp eyes and iris detail:1.2), fine hair strands, soft catchlights, (young face:1.2), natural film grain, avoid plastic skin'},
+ plan:[
+   ['第一步','2x','Portrait Soft','0','1','7','0','sparkle',''],
+   ['第二步','2x','Portrait Soft','0','1','6','0','sparkle','']
+ ],
+ notes:['Magnific 容易把脸"加老"，用 (young face:1.2) 之类的权重压制。',
+        'CREATIVITY 超过 2 五官会漂移，人像务必保守。',
+        'Precision 的 v2 (Photo) 最保真，写真 / 客户返图优先用它。']},
+
+{k:'nature', n:'风景 / 自然', group:'photo',
+ p:{model:'v2 (Sublime)', sharpness:35, grain:7, ultraDetail:35},
+ c:{optimized:'Nature & Landscapes', creativity:1, hdr:2, resemblance:5, fractality:2, engine:'illusio',
+    prompt:'(crisp foliage and rock texture:1.15), distant atmospheric depth, (natural color grading:1.05), fine natural detail'},
+ plan:[
+   ['第一步','2x','Nature & Landscapes','0','2','6','1','illusio',''],
+   ['第二步','2x','Nature & Landscapes','1','2','5','2','sharpy','']
+ ],
+ notes:['树叶、草地是细节黑洞，ULTRA DETAIL 可以给高一点，但要盯着"假纹理"。']},
+
+{k:'product', n:'产品 / 静物', group:'photo',
+ p:{model:'v2 (Photo)', sharpness:25, grain:0, ultraDetail:25},
+ c:{optimized:'Standard Ultra', creativity:0, hdr:1, resemblance:8, fractality:-2, engine:'sharpy',
+    prompt:'(precise material texture:1.15), clean edges, accurate color, no invented details, no plastic look'},
+ plan:[
+   ['第一步','2x','Standard Ultra','0','1','8','-2','sharpy',''],
+   ['第二步','2x','Standard Ultra','0','1','8','-1','sharpy','']
+ ],
+ notes:['产品图零容忍"幻觉"，用 Precision v2 (Photo) 或 Creative + RESEMBLANCE 8。',
+        '表面材质（金属、玻璃、皮革）别被"加"出纹理。']},
+
+{k:'arch', n:'建筑 / 空间', group:'photo',
+ p:{model:'v2 (Sublime)', sharpness:30, grain:0, ultraDetail:30},
+ c:{optimized:'Films & Photography', creativity:0, hdr:2, resemblance:6, fractality:0, engine:'sparkle',
+    prompt:'(clean straight architectural lines:1.2), accurate material texture, (no distortion:1.1), natural light falloff'},
+ plan:[
+   ['第一步','2x','Films & Photography','0','2','7','0','sparkle',''],
+   ['第二步','2x','Standard Ultra','0','2','6','0','sharpy','']
+ ],
+ notes:['直线和边缘最容易弯，FRACTALITY 保持 0 或负数。']},
+
+{k:'render3d', n:'3D 渲染', group:'art',
+ p:{model:'v2 (Sublime)', sharpness:25, grain:0, ultraDetail:25},
+ c:{optimized:'3D Renders', creativity:1, hdr:2, resemblance:6, fractality:1, engine:'sparkle',
+    prompt:'(clean surfaces:1.15), subtle micro-detail, accurate reflections, no noise, no added texture'},
+ plan:[
+   ['第一步','2x','3D Renders','0','2','7','0','sparkle',''],
+   ['第二步','2x','3D Renders','1','2','6','1','sparkle','']
+ ],
+ notes:['渲染图很干净，GRAIN 一定给 0，否则会给光滑面加出噪点。']},
+
+{k:'game', n:'游戏素材', group:'art',
+ p:{model:'v2 (Photo)', sharpness:25, grain:0, ultraDetail:20},
+ c:{optimized:'Videogame Assets', creativity:2, hdr:2, resemblance:6, fractality:1, engine:'sparkle',
+    prompt:'(clean silhouette:1.2), crisp edges, (no background detail:1.15), consistent lighting, game-ready texture'},
+ plan:[
+   ['第一步','2x','Videogame Assets','1','2','7','0','sparkle',''],
+   ['第二步','2x','Videogame Assets','2','2','6','1','sparkle','']
+ ],
+ notes:['带透明通道的素材请导出 PNG，JPG 会变黑底。']},
+
+{k:'scifi', n:'科幻 / 恐怖', group:'art',
+ p:{model:'v2 (Sublime)', sharpness:25, grain:5, ultraDetail:25},
+ c:{optimized:'Science Fiction & Horror', creativity:2, hdr:3, resemblance:5, fractality:2, engine:'sharpy',
+    prompt:'(detailed mechanical surfaces:1.15), volumetric light, moody atmosphere, fine surface wear, (clean shadows:1.1)'},
+ plan:[
+   ['第一步','2x','Science Fiction & Horror','1','2','6','1','sparkle',''],
+   ['第二步','2x','Science Fiction & Horror','2','3','5','2','sharpy','']
+ ],
+ notes:['暗部多，HDR 超过 4 会在暗处出现色块，得不偿失。']},
+
+{k:'film', n:'电影感 / 胶片', group:'photo',
+ p:{model:'v2 (Photo)', sharpness:20, grain:10, ultraDetail:20},
+ c:{optimized:'Films & Photography', creativity:0, hdr:1, resemblance:7, fractality:0, engine:'sparkle',
+    prompt:'(organic film grain:1.1), (natural skin and material texture:1.1), cinematic color, no plastic smoothing'},
+ plan:[
+   ['第一步','2x','Films & Photography','0','1','8','0','sparkle',''],
+   ['第二步','2x','Films & Photography','0','1','7','0','sparkle','']
+ ],
+ notes:['颗粒本身就是风格：GRAIN 给 7–12 保留，千万别用 denoiser 抹平。']},
+
+{k:'screen', n:'截图 / 文字', group:'art',
+ p:{model:'v2 (Photo)', sharpness:15, grain:0, ultraDetail:10},
+ c:{optimized:'Art & Illustration', creativity:-2, hdr:0, resemblance:9, fractality:-4, engine:'illusio',
+    prompt:'(preserve text legibility:1.3), (sharp letterforms:1.2), keep flat colors flat, no distortion, no added texture'},
+ plan:[
+   ['第一步','2x','Art & Illustration','-2','0','9','-4','illusio',''],
+   ['第二步','2x','Art & Illustration','-1','0','9','-3','illusio','']
+ ],
+ notes:['文字/UI 千万别用高 CREATIVITY，模型会把字"改写"成看不懂的东西。',
+        'ULTRA DETAIL 高了会出现假边和光晕，压到 10 左右。']}
+];
+const TYPE_MAP={}; TYPES.forEach(t=>TYPE_MAP[t.k]=t);
+
+/* ============================================================
+   四、自动判断内容类型
+============================================================ */
+function guessType(M,F){
+  const s={}; const add=(k,v)=>{ s[k]=(s[k]||0)+v; };
+  const wide = M.aspect>2.4 || M.aspect<0.42;
+
+  /* 硬信号：图形/矢量 与 人像 */
+  if(F.graphic){
+    if(M.satMean>=0.22){ add('illust',42); add('pattern',14); }
+    else if(F.periodic || F.twoTone || M.flatRatio>0.42){ add('pattern',44); add('screen',10); }
+    else { add('screen',52); add('pattern',10); }
+  }
+  if(F.portrait) add('portrait',70);
+
+  /* 画作 / 壁画：长条、色块集中、低饱和、无压缩痕迹 */
+  if(!F.graphic){
+    if(wide) add('mural',16);
+    if(M.aspect>6) add('chinese',14);          // 长卷
+    if(M.top32>0.58){ add('mural',20); add('oil',8); }
+    if(M.top32>0.58 && M.satMean<0.24 && M.edgeConc<0.22) add('chinese',26);
+    if(wide && M.top32>0.5 && M.satMean<0.26 && M.edgeConc<0.22) add('chinese',18);
+    if(M.top32>0.34 && M.top32<0.78 && (M.flatRatio>0.18 || wide) && M.blockiness<1.22 && M.satMean>0.16){ add('mural',24); add('oil',6); }
+    if(M.noiseTxt>3.5 && M.blockiness<1.15 && M.flatRatio<0.35) add('oil',24);
+    if(M.satMean<0.16 && M.top32>0.5 && M.edgeConc>0.22) add('pattern',26);   // 黑白几何 / 单色图案
+    if(F.periodic && M.flatRatio<0.78) add('pattern',22);                     // 能测出重复周期 → 图案/墙布
+  }
+  if(F.periodic) add('screen',-45);      // 截图/文字没有干净的重复周期
+
+  /* 实拍照片 */
+  if(!F.graphic && !F.illustration){
+    add('photo',22);
+    if(M.blockiness>1.10) add('photo',10);
+    if(M.noiseTxt>1.6) add('photo',8);
+    if(M.hfRatio>0.09) add('photo',6);
+  }
+  if(wide) add('photo',-18);   // 长条画面基本不可能是实拍照片
+
+  /* 自然 / 渲染 / 图案 / 暗调 / 胶片 / 透明 */
+  if(F.nature) add('nature',38);
+  if(M.greenRatio>0.25) add('nature',14);
+  if(F.aiLike && M.flatRatio>0.28) add('render3d',22);
+  if(F.aiLike && M.flatRatio>0.45 && M.satMean>0.28) add('pattern',16);
+  if(M.flatRatio>0.55 && M.top32>0.6 && !F.graphic) add('pattern',14);
+  if(F.moody) add('scifi',26);
+  if(F.grainy && !F.portrait) add('film',22);
+  if(F.hasAlpha) add('game',34);
+
+  let best='photo', bv=-1;
+  for(const k in s){ if(s[k]>bv){bv=s[k];best=k;} }
+  const vals=Object.values(s).sort((a,b)=>b-a);
+  const gap = vals.length>1 ? (vals[0]-vals[1])/Math.max(1,vals[0]) : 1;
+  const conf = gap>0.45?'高' : gap>0.18?'中' : '低';
+  return {key:best, conf, scores:s};
+}
+
+/* ============================================================
+   五、生成推荐
+============================================================ */
+function buildRec(typeKey, M, F, auto){
+  auto = auto || state.auto || {key:typeKey, conf:'中'};
+  const T=TYPE_MAP[typeKey];
+  const c=Object.assign({}, T.c), p=Object.assign({}, T.p);
+  const notes=[], whyC={}, whyP={};
+  const addNote=(t,cls)=>{ if(t) notes.push([t,cls||'']); };
+
+  const isArtGroup = T.group==='art';
+
+  /* --- 通用：模式倾向 --- */
+  let mode = isArtGroup ? 'creative' : 'precision';
+
+  /* --- 分辨率 --- */
+  let scale;
+  if(M.mp<0.5) scale='4x（低分辨率源，必要时分两步 2x → 2x）';
+  else if(M.mp<2.5) scale='4x';
+  else if(M.mp<10) scale='2x（想更细可 2x → 2x）';
+  else scale='2x';
+  if(p.model==='v2 (Photo)' && M.mp>8) scale='2x（v2 Photo 的 2x 主场，最保真）';
+  else if(p.model==='v2 (Sublime)' && M.mp<=10) scale='4x（Sublime 在 4x 最能打）';
+  if(M.mp>20) scale='2x（原图已经 '+r2(M.mp)+' MP，2x 后约 '+r2(M.mp*4)+' MP，先确认平台输出上限）';
+
+  /* --- 清晰度 --- */
+  if(F.verySoft){
+    p.sharpness=clamp(p.sharpness+20,0,80); c.hdr=clamp(c.hdr+1,-10,10); c.resemblance=clamp(c.resemblance-1,-10,10);
+    c.prompt+=', (restore fine detail:1.15)';
+    whyP.sharpness='画面明显偏软/模糊 → SHARPNESS 拉高';
+    addNote('画面明显偏软：SHARPNESS 已调高。但放大只能"猜"细节，不会真的把糊掉的边缘变清楚——如果原图能重拍/重新导出，比调参有效得多。','w');
+  } else if(F.soft){
+    p.sharpness=clamp(p.sharpness+10,0,80);
+    whyP.sharpness='画面偏软 → SHARPNESS 略升';
+  } else if(F.crisp){
+    p.sharpness=clamp(p.sharpness-10,0,80);
+    whyP.sharpness='原图已经很锐 → SHARPNESS 压低，避免假边光晕';
+    addNote('原图已经很锐，SHARPNESS 别调高，否则边缘会出现"描边感"和光晕。','');
+  }
+
+  /* --- JPEG 压缩痕迹 --- */
+  if(F.heavyJPEG){
+    p.model='v2 (Photo denoiser)';
+    p.sharpness=clamp(p.sharpness-8,0,80);
+    c.engine = (c.optimized.indexOf('Illustration')>=0||c.optimized.indexOf('Nature')>=0) ? 'illusio' : 'sparkle';
+    c.fractality=clamp(c.fractality-2,-10,10);
+    whyP.model='检测到明显 8×8 压缩块 → 用 denoiser 版';
+    addNote('检测到明显的 JPEG 压缩块（blockiness '+r2(M.blockiness)+'）。建议先跑一遍 <b>Precision v2 (Photo denoiser)</b> 去掉压缩痕迹，再进 Creative；否则 Creative 会把压缩块当成"细节"一起放大。','b');
+  } else if(F.jpegFlag){
+    c.engine = c.engine==='sharpy' ? 'sparkle' : c.engine;
+    addNote('有轻微压缩痕迹，ENGINE 已避开 sharpy（sharpy 不修压缩痕迹，还可能制造"假 JPEG 痕迹"）。','');
+  }
+
+  /* --- 噪点 --- */
+  if(F.noisy){
+    c.hdr=clamp(c.hdr-1,-10,10); c.fractality=clamp(c.fractality-2,-10,10);
+    p.grain=0; p.ultraDetail=clamp(p.ultraDetail-10,0,100);
+    whyC.fractality='噪点多 → FRACTALITY 压低，免得噪点被当细节放大';
+    addNote('高频噪点偏多，FRACTALITY / HDR 已压低，GRAIN 归零。噪点重的照片先走一遍 denoiser 再放大。','w');
+  } else if(F.grainy && !isArtGroup){
+    p.grain = clamp(Math.round(M.noiseTxt*2), 7, 12);
+    whyP.grain='原图有真实颗粒 → GRAIN 保留，避免塑料感';
+    addNote('检测到画面本身有颗粒质感，GRAIN 给到 '+p.grain+'% 保留下来（这是风格，不是缺陷）。','');
+  }
+
+  /* --- 线稿 / 矢量 --- */
+  if(F.lineArt){
+    c.fractality=clamp(c.fractality-3,-10,10); c.creativity=clamp(c.creativity-1,-10,10);
+    p.ultraDetail=Math.min(p.ultraDetail,15); p.sharpness=Math.min(p.sharpness,18); p.grain=0;
+    addNote('画面接近线稿/矢量：FRACTALITY 和 ULTRA DETAIL 都压低了，否则线条会长出毛刺、平涂色块会生噪。','w');
+  } else if(F.flatGraphic){
+    p.grain=0; c.fractality=clamp(c.fractality-1,-10,10);
+    addNote('画面色块集中、平坦区很多（偏图形/矢量），GRAIN 归零，别给平面加噪。','');
+  }
+
+  /* --- 重复图案 / 墙布（本行主力品类，单独照顾） --- */
+  if(F.periodic && typeKey==='pattern'){
+    c.resemblance=clamp(Math.max(c.resemblance,8),-10,10);
+    c.fractality=clamp(Math.min(c.fractality,-1),-10,10);
+    if(F.twoTone){
+      c.prompt=c.prompt.replace('(crisp fabric weave detail:1.1)','(razor-sharp geometric edges:1.15)')
+                       .replace('flat even lighting,','flat even lighting, pure two-tone black and white,');
+      addNote('这是纯黑白（双色调）的重复图案：PROMPT 已换成"几何硬边"版本。不要织物纹理——'
+        +'否则放大模型会给平涂的黑色块糊上一层编织质感。','w');
+    }else{
+      addNote('测出清晰的重复周期（横向 '+M.perDx+' px / 纵向 '+M.perDy+' px）：'
+        +'重复图案最容易在接缝和错位处露馅，所以 RESEMBLANCE 拉高、FRACTALITY 压住。'
+        +'放大后请用拼接预览检查一遍接缝。','w');
+    }
+  }
+
+  /* --- 低分辨率 --- */
+  if(F.lowRes){
+    c.creativity=clamp(c.creativity+1,-10,10); c.resemblance=clamp(c.resemblance-1,-10,10);
+    addNote('原图分辨率偏低（'+r2(M.mp)+' MP），可以给模型多一点自由（CREATIVITY +1、RESEMBLANCE −1），但结构漂移的风险也更高，放完一定要比对原图。','w');
+  }
+  if(F.hugeRes){
+    addNote('原图已经很大（'+r2(M.mp)+' MP），优先 2x；高倍率单次放大会让结构偏移。','');
+  }
+
+  /* --- 影调 --- */
+  if(F.moody){
+    c.hdr=clamp(c.hdr-1,-10,10);
+    addNote('整体偏暗、对比强：HDR 压低一点，避免暗部出现色块和彩噪。','');
+  }
+  if(F.flatTone){
+    c.hdr=clamp(c.hdr+1,-10,10);
+    whyC.hdr='画面偏灰 → HDR 略升提对比';
+    addNote('画面偏灰、对比不足，HDR 略升可以提一层通透感。','');
+  }
+
+  /* --- 透明通道 --- */
+  if(F.hasAlpha){
+    addNote('检测到透明通道：放大后请导出 <b>PNG</b>，JPG 会把透明区域变成黑底。','w');
+  }
+
+  /* --- AI 生成倾向 --- */
+  if(F.aiLike){
+    addNote('画面非常干净（低噪点、无压缩痕迹），像是 AI 生成或 3D 渲染。如果是 AI 生成的图，把<b>原始提示词</b>填进 PROMPT，放大质量会明显提升。','g');
+  }
+
+  /* --- 人像专属提醒 --- */
+  if(typeKey==='portrait' || F.portrait){
+    addNote('人像请盯着三件事：五官是否漂移、皮肤是否塑料感、有没有被"加老"。任何一项出问题就把 CREATIVITY 降 1–2 再来。','');
+  }
+
+  /* --- 低置信度提醒 --- */
+  if(typeKey===auto.key && auto.conf==='低'){
+    notes.unshift(['自动判断这张图的类型<b>不太确定</b>，下面的参数是按「'+T.n+'」给的。如果类型点错了，参数会整体偏掉——请先在上面把类型点对，再照抄参数。','w']);
+  }
+
+  /* --- 安全区间 --- */
+  c.creativity=clamp(c.creativity,-10,10); c.hdr=clamp(c.hdr,-10,10);
+  c.resemblance=clamp(c.resemblance,-10,10); c.fractality=clamp(c.fractality,-10,10);
+  p.sharpness=clamp(p.sharpness,0,100); p.grain=clamp(p.grain,0,100); p.ultraDetail=clamp(p.ultraDetail,0,100);
+
+  /* --- 分步方案 --- */
+  const plan=[];
+  let altPlan=[];
+  if(F.heavyJPEG){
+    plan.push(['预处理','precision','倍数 2x　MODEL v2 (Photo denoiser)',
+      'SHARPNESS '+p.sharpness+'　GRAIN 0','',
+      '先把 JPEG 压缩块和噪点清掉，再进正式放大']);
+  }
+  const creativeRows=(T.plan||[]).map(r=>[r[0],'creative',
+      '倍数 '+r[1]+'　OPTIMIZED FOR '+r[2],
+      'CREATIVITY '+r[3]+'　HDR '+r[4]+'　RESEMBLANCE '+r[5]+'　FRACTALITY '+r[6]+'　ENGINE '+r[7],
+      '', r[8]||'']);
+  if(F.heavyJPEG && creativeRows.length){
+    creativeRows[0][3]=creativeRows[0][3].replace('ENGINE sharpy','ENGINE sparkle');
+  }
+  const precRows=[[mode==='precision'?'主方案':'一步到位','precision','倍数 '+(M.mp<2.5?'4x':'2x')+'　MODEL '+p.model,
+      'SHARPNESS '+p.sharpness+'　GRAIN '+p.grain+(p.model==='v2 (Sublime)'?'':'　ULTRA DETAIL '+p.ultraDetail),
+      '', 'Precision 一次成型：忠实提升分辨率，不额外"创作"细节']];
+  if(mode==='precision'){ plan.push(...precRows); altPlan=creativeRows; }
+  else { plan.push(...creativeRows); altPlan=precRows; }
+
+  return {
+    typeKey, mode, scale, creative:c, precision:p, notes, whyC, whyP, plan, altPlan,
+    promptBase:T.c.prompt
+  };
+}
+
+/* ============================================================
+   六、渲染
+============================================================ */
+const state={ img:null, meta:null, M:null, F:null, auto:null, type:null, mode:null, vals:{}, rec:null, actual:false };
+
+function barClass(pct, tone){
+  if(tone==='neutral') return '';
+  const v = tone==='good-high' ? 100-pct : pct;
+  if(v>78) return 'bad'; if(v>55) return 'warn'; return 'ok';
+}
+function metricRow(label, valueText, pctVal, hint, tone){
+  const p=clamp(pctVal,0,100);
+  return '<div class="mrow"><div class="mtop"><b>'+label+'</b><span>'+valueText+'</span></div>'+
+    '<div class="mbar"><i class="'+barClass(p,tone)+'" style="width:'+p.toFixed(1)+'%"></i></div>'+
+    (hint?'<div class="mhint">'+hint+'</div>':'')+'</div>';
+}
+
+function renderMetrics(){
+  const M=state.M, F=state.F;
+  const sharpPct = clamp(M.sharp2/0.8*100,0,100);
+  let html='';
+  html+=metricRow('清晰度（锐度）', M.sharp2.toFixed(2)+' · '+(F.verySoft?'明显偏软':F.soft?'偏软':F.crisp?'很锐':'正常'),
+      sharpPct, '数值越高说明原图边缘越干脆；偏低时放大要谨慎', 'good-high');
+  html+=metricRow('高频细节量', M.hfRatio.toFixed(3), clamp(M.hfRatio/0.30*100,0,100),
+      '画面里细碎纹理的多少，影响 ULTRA DETAIL / FRACTALITY 的取值', 'neutral');
+  html+=metricRow('高频纹理 / 噪点', M.noiseTxt.toFixed(2), clamp(M.noiseTxt/8*100,0,100),
+      '偏高时不要提高 FRACTALITY，否则噪点会被当成细节放大', 'bad-high');
+  html+=metricRow('JPEG 压缩痕迹', M.blockiness.toFixed(3), clamp((M.blockiness-1)/0.5*100,0,100),
+      '>1.22 有痕迹，>1.30 建议先用 denoiser 去一遍', 'bad-high');
+  html+=metricRow('色块集中度', (M.top32*100).toFixed(1)+'%', M.top32*100,
+      '越高越像插画 / 矢量 / 截图；越低越像照片', 'neutral');
+  html+=metricRow('边缘集中度', (M.edgeConc*100).toFixed(1)+'%', clamp(M.edgeConc/0.6*100,0,100),
+      '越高说明边缘越"硬"（线条、文字、矢量边）', 'neutral');
+  html+=metricRow('平坦区域占比', (M.flatRatio*100).toFixed(1)+'%', M.flatRatio*100,
+      '大片纯色/平滑区域多，说明偏图形化', 'neutral');
+  html+=metricRow('暖色/肤色', (M.skinRatio*100).toFixed(1)+'%', clamp(M.skinRatio/0.35*100,0,100),
+      '暖色像素占比，共 '+M.skinBlobs+' 块'
+      +(M.skinBlobs<=2 && M.skinBlobArea>0.04 ? '（少而集中 → 像人脸）'
+                                              : '（块数多 → 多半是木头/砖墙/暖色家具，不是人）'),
+      'neutral');
+  html+=metricRow('重复周期', F.periodic?('检出 '+(M.perDx||'?')+' × '+(M.perDy||'?')+' px'):'未检出',
+      F.periodic?100:0,
+      F.periodic?'能测出干净的重复周期 → 这是可拼接的重复图案（墙布/花型）。接缝是最容易露馅的地方'
+                :'没测出重复周期 → 多半是独幅画面（壁画 / 照片 / 绘画），不是可拼接的重复花型',
+      'neutral');
+  html+=metricRow('亮度 / 对比', Math.round(M.meanLum)+' / '+Math.round(M.contrast),
+      clamp(M.contrast/80*100,0,100), M.meanLum<82?'整体偏暗，HDR 别太高':'', 'neutral');
+
+  $('#metrics').innerHTML=html;
+
+  const kv=[];
+  kv.push(['原始尺寸', M.W+' × '+M.H]);
+  kv.push(['总像素', r2(M.mp)+' MP']);
+  kv.push(['长宽比', r2(M.aspect)+' : 1']);
+  kv.push(['色彩丰富度', r2(M.colorfulness)]);
+  kv.push(['平均饱和度', r2(M.satMean)]);
+  kv.push(['透明通道', M.alphaRatio>0.008?'有（导出请用 PNG）':'无']);
+  kv.push(['取样图块', M.nPatches+' 块 / 原分辨率']);
+  $('#mfoot').innerHTML='<div style="margin-top:8px">'+kv.map(k=>'<div class="kv"><span>'+k[0]+'</span><span>'+k[1]+'</span></div>').join('')+'</div>';
+}
+
+function renderChips(){
+  const auto=state.auto.key;
+  let html='<div class="chip auto'+(state.type===auto?' on':'')+'" data-k="'+auto+'">'+
+    (state.type===auto?'<span class="dot"></span>':'')+'自动判断：'+TYPE_MAP[auto].n+'</div>';
+  for(const t of TYPES){
+    if(t.k===auto) continue;
+    html+='<div class="chip'+(state.type===t.k?' on':'')+'" data-k="'+t.k+'">'+t.n+'</div>';
+  }
+  $('#chips').innerHTML=html;
+  $('#chips').querySelectorAll('.chip').forEach(el=>{
+    el.onclick=()=>{ state.type=el.dataset.k; refresh(); };
+  });
+  const conf=state.auto.conf;
+  $('#typehint').innerHTML='自动判断置信度：<b>'+conf+'</b>。判断不准就直接点上面的类型覆盖它——<b>你比算法更清楚这是什么图</b>。';
+}
+
+function pvalRow(key, label, val, min, max, rec, hint, reason){
+  const cur = state.vals[state.mode][key];
+  const eq = Math.abs(cur-rec)<1e-6;
+  return '<div class="param" data-k="'+key+'">'+
+    '<div class="ph"><span class="pname">'+label+'</span><span class="pval">'+cur+'</span></div>'+
+    '<input type="range" min="'+min+'" max="'+max+'" step="1" value="'+cur+'" data-k="'+key+'">'+
+    '<div class="pr"><span class="rec">推荐 '+rec+'</span>'+
+      '<button data-reset="'+key+'">用推荐值</button>'+
+      (reason?'<span>'+reason+'</span>':'')+
+    '</div>'+
+    (hint?'<div class="phint">'+hint+'</div>':'')+
+  '</div>';
+}
+function pselRow(key, label, val, opts, rec, hint, reason){
+  return '<div class="param" data-k="'+key+'">'+
+    '<div class="ph"><span class="pname">'+label+'</span></div>'+
+    '<select data-k="'+key+'">'+opts.map(o=>'<option value="'+o+'"'+(o===val?' selected':'')+'>'+o+(o===rec?'　✓ 推荐':'')+'</option>').join('')+'</select>'+
+    '<div class="pr">'+(val===rec?'<span class="rec">就是推荐值</span>':'<button data-reset="'+key+'">用推荐值</button>')+
+      (reason?'<span>'+reason+'</span>':'')+'</div>'+
+    (hint?'<div class="phint">'+hint+'</div>':'')+
+  '</div>';
+}
+
+/* ============================================================
+   九、引擎路由：这张图该用 Hildegard 还是 Magnific
+   ------------------------------------------------------------
+   依据来自 Hildegard 的 README / 节点源码 / 示例工作流，不是猜：
+   · Hildegard 的保真度只来自一个东西：tile_latent = 这一格自己的裁切。
+     所以「一格裁切里有多少信息」就是这一格的上限。
+       - 密纹理 / 可拼接花型 → 锚点牢，能复刻"这张"纹理
+       - 大面积平底      → 裁切近乎纯色，没得锚，只能按先验补 → 偏色发灰
+   · Magnific 整图一次生成、不分块，全局永远自洽，干净底是它的舒适区；
+     但它的纹理先验是"通用的"，要花型原样不变时会给错东西。
+   · README 原文：tile_weight "is the direct analogue of the resemblance /
+     creativity slider on services like Magnific"。
+============================================================ */
+function routeEngine(M,F,res){
+  const hasRoom = res ? (res.mockup===true) : null;
+  let H=0, Mo=0; const whyH=[], whyM=[];
+  const aH=(n,t)=>{ H+=n; whyH.push([n,t]); };
+  const aM=(n,t)=>{ Mo+=n; whyM.push([n,t]); };
+
+  if(F.periodic) aH(45,'检出重复周期 '+M.perDx+'×'+M.perDy+' px —— 这是可拼接的重复花型，'
+    +'花型必须原样不变，不能"重新设计"');
+  if(M.hfRatio>0.18) aH(16,'高频细节量 '+M.hfRatio.toFixed(2)+'，细密纹理多 —— '
+    +'Hildegard 的裁切锚点信息足，能复刻"这张"纹理而不是"某种"纹理');
+  if(M.flatRatio<0.12) aH(10,'几乎没有平坦区（'+(M.flatRatio*100).toFixed(0)+'%）—— 每一格都有东西可锚');
+  if(M.flatRatio<0.03) aH(8,'平坦区低到 '+(M.flatRatio*100).toFixed(1)
+    +'% —— 连一小块纯色都找不到，是 Hildegard 最舒服的输入');
+  if(F.heavyJPEG||F.noisy) aH(12,'源图带压缩痕迹/噪点 —— Hildegard 的 tile_high_freq_reduce '
+    +'正好能先洗掉再重绘，这是它的强项');
+  if(M.mp<1.5 && !F.graphic) aH(6,'原图只有 '+r2(M.mp)+' MP，要大幅放大 —— '
+    +'迭代放大（2~3 轮 ×2）比一次大跳更稳');
+
+  if(hasRoom===true) aM(45,'本地模型认出这是室内场景图 —— 画面里有房间和透视，'
+    +'全局色调一致比局部纹理更要紧');
+  if(F.portrait) aM(30,'人像 —— Hildegard 每格独立重绘，脸跨格时五官容易接不连贯');
+  if(F.graphic) aM(30,'平涂 / 矢量 / 线稿 —— Hildegard 会把大片纯色区重绘成灰调，'
+    +'而平涂最怕被"加纹理"');
+  if(M.flatRatio>0.40) aM(22,'平坦区占 '+(M.flatRatio*100).toFixed(0)
+    +'% —— Hildegard 在纯色区没有锚点，最容易偏色发灰');
+  if(M.flatRatio>0.60) aM(10,'平坦区超过六成，偏色风险更高');
+  if(F.verySoft) aM(8,'画面明显偏软 —— Magnific 的先验能把糊掉的边缘"猜"得更自然');
+  /* 与上面「高频细节量高 → Hildegard」对称的一条：细节稀薄的图，每格裁切都没多少信息，
+     Hildegard 只能按先验补 → 平处容易发灰。这是同一个机制的另一半。 */
+  if(M.hfRatio<0.10) aM(10,'高频细节量只有 '+M.hfRatio.toFixed(2)+'，纹理稀薄 —— '
+    +'每一格的裁切里信息都不多，Hildegard 在信息少的地方只能按自己的先验"补"，容易发灰');
+
+  const gap=H-Mo;
+  const primary = Math.abs(gap)<=12 ? 'tie' : (gap>0?'hildegard':'magnific');
+  whyH.sort((a,b)=>b[0]-a[0]); whyM.sort((a,b)=>b[0]-a[0]);
+  return {primary,H,Mo,whyH,whyM,hasRoom,gap};
+}
+
+/* 针对这张图的 Hildegard 起手参数（默认值都对齐他的示例工作流，再按图改） */
+function hildegardSetup(M,F){
+  const rows=[];
+  const w = F.periodic ? 1.2 : (M.flatRatio>0.40 ? 1.1 : 1.0);
+  rows.push(['tile_weight', w.toFixed(1),
+    F.periodic
+      ? '检出重复花型 → 拉到 1.2，花型优先原样不变。你的示例工作流是 0.9（低于中性 1.0），是偏"创造"的'
+      : '你的示例工作流是 0.9 / 0.8 / 0.8，都低于中性 1.0 —— 想公平比较，先把保真度提上来']);
+  const red=(F.heavyJPEG||F.noisy)?0.30:0.00;
+  rows.push(['tile_high_freq_reduce', red.toFixed(2),
+    red>0 ? '源图有压缩痕迹/噪点 → 减掉一部分高频，让模型重新合成干净的细节（减了它 low_freq_radius 才生效）'
+          : '源图干净 → 保持 0.0（最保真端），源图细节全部留在参考里']);
+  const anchor = M.flatRatio>0.20 || F.periodic;
+  rows.push(['色彩锚定节点', anchor?'必须开':'先不开',
+    anchor ? '平坦区占 '+(M.flatRatio*100).toFixed(0)+'%，纯色区没锚点最容易偏色。'
+             +'注意光取消 BYPASS 不够，还要把它的 conditioning 从最后一个 ReferenceLatent 接过去'
+           : '平坦区少，偏色风险低。先不开；出现块间偏色再接上']);
+  rows.push(['ctrl3_max_size', M.mp>4?'2048':'1024',
+    '你的示例填的是 768（节点默认是 2048）。全图缩略图越大，模型对整体色调的把握越强'
+    +' —— 这条是推断，值得单独 A/B 一次']);
+  rows.push(['tile 或 步数','二选一改',
+    '示例是 2048² 只配 4 步，每像素预算很薄，出来容易发塑料感。'
+    +'先只改一样：tile 降到 1536，或步数提到 6–8，别同时动']);
+  return rows;
+}
+
+function hildegardRisks(M,F){
+  const r=[];
+  if(M.flatRatio>0.20) r.push(['w','平坦区占 '+(M.flatRatio*100).toFixed(0)
+    +'%：纯色区没有锚点，是最可能偏色/发灰的地方。放大后单独量一下平底的平均亮度，'
+    +'变暗就是中了 —— 靠色彩锚定压住']);
+  if(F.periodic) r.push(['w','可拼接花型：每格独立重绘，块与块之间的重复单元可能对不齐。'
+    +'放大后必须用拼接预览逐条检查接缝']);
+  r.push(['','每格都是从纯噪声重绘的，跑两次结果不一样。做对比前先把 RandomNoise 的 '
+    +'control_after_generate 改成 fixed，否则两次运行的差异比两个引擎的差异还大']);
+  return r;
+}
+
+function magnificCaveat(M,F){
+  if(F.periodic) return ['b','这张图交给 Magnific 的真实风险不是"差一点"而是"错"：'
+    +'Creative 会改造纹理、凭空长出新花型，还可能破坏重复单元 —— 而可拼接花型一旦被破坏就没法用于生产。'
+    +'真要交给 Magnific，走 <b>Precision</b> 模式（v2 Photo）并把 RESEMBLANCE 拉到 8–9，别用 Creative。'];
+  if(F.graphic) return ['','平涂 / 矢量图交给 Magnific 的重点是别让它加纹理：GRAIN 归零、'
+    +'FRACTALITY 压低，PROMPT 里保留 no added texture。'];
+  return null;
+}
+
+function renderRoute(){
+  const M=state.M, F=state.F;
+  /* has_room 是「这张图里有没有房间」这一客观属性，跟模型判断有没有被采纳无关，
+     所以只要跑过就拿来用，不管 applied。 */
+  const res=vlm.result||null;
+  const r=routeEngine(M,F,res);
+  const isH=(r.primary==='hildegard'), tie=(r.primary==='tie');
+
+  let h='<div class="card"><h2>引擎路由建议</h2>';
+  h+='<div class="rtop">'
+    +'<span class="rbadge '+(tie?'tie':isH?'h':'m')+'">'
+      +(tie?'两边都行':(isH?'首选 Hildegard':'首选 Magnific'))+'</span>'
+    +'<span class="rscore">Hildegard '+r.H+' : '+r.Mo+' Magnific'
+      +(tie?'（差值 ≤12 算平手）':'')+'</span>'
+    +'</div>';
+
+  if(tie){
+    /* 平手时必须把两边的理由都摆出来：只取一边会得到一段空白 */
+    const allH=r.whyH.slice(0,2), allM=r.whyM.slice(0,2);
+    h+='<div class="rsub">两边都行的理由</div>';
+    if(allH.length||allM.length){
+      allH.forEach(w=>{ h+='<div class="rwhy">· <b>Hildegard</b>：'+w[1]+'</div>'; });
+      allM.forEach(w=>{ h+='<div class="rwhy">· <b>Magnific</b>：'+w[1]+'</div>'; });
+    }else{
+      h+='<div class="rwhy">这张图上两个引擎都没测出明显的短板，也都没测出明显的优势 —— '
+        +'按你更熟的那个来。真要挑：Hildegard 参数多、可控性强，Magnific 上手快。</div>';
+    }
+  }else{
+    const why=(isH?r.whyH:r.whyM).slice(0,3);
+    if(why.length){
+      h+='<div class="rsub">为什么</div>';
+      why.forEach(w=>{ h+='<div class="rwhy">· '+w[1]+'</div>'; });
+    }
+    const against=(isH?r.whyM:r.whyH).slice(0,2);
+    if(against.length){
+      h+='<div class="rsub">另一边的理由（如果上面这些对你更要紧，就换过去）</div>';
+      against.forEach(w=>{ h+='<div class="rwhy" style="color:var(--tx3)">· '+w[1]+'</div>'; });
+    }
+  }
+
+  if(isH||tie){
+    h+='<div class="rsub">Hildegard 起手参数（对着你的示例工作流改）</div>';
+    h+='<table class="rtab">';
+    hildegardSetup(M,F).forEach(row=>{
+      h+='<tr><td class="rk">'+row[0]+'</td><td class="rv">'+row[1]+'</td><td class="rd">'+row[2]+'</td></tr>';
+    });
+    h+='</table>';
+    h+='<div class="rsub">这张图上要盯的地方</div>';
+    hildegardRisks(M,F).forEach(n=>{
+      h+='<div class="note '+(n[0]||'')+'" style="margin-bottom:6px"><span class="ic">'+(n[0]==='w'?'!':'·')+'</span><div>'+n[1]+'</div></div>';
+    });
+  }else{
+    h+='<div class="rsub">Magnific 这边的重点</div>';
+    const cav=magnificCaveat(M,F);
+    if(cav) h+='<div class="note '+(cav[0]||'')+'" style="margin-bottom:6px"><span class="ic">'+(cav[0]==='b'?'!':'·')+'</span><div>'+cav[1]+'</div></div>';
+    /* 周期花型那条要求改走 Precision，所以不能再照搬分步方案的 Creative，否则自相矛盾 */
+    const forcePrec = !!(cav && cav[0]==='b');
+    if(forcePrec){
+      h+='<div class="rwhy">倍数照下面「分步放大方案」的 <b>'+state.rec.scale+'</b>，'
+        +'但<b>模式要改成 Precision</b>（v2 Photo，RESEMBLANCE 8–9）—— '
+        +'下面那套是 Creative，这张图别直接用。'
+        +'如果 Precision 出来发现纹理还是被"规整"成了通用质感，那正是 Hildegard 的强项 —— '
+        +'换成它，用高 tile_weight + reduce 0 再跑一遍。</div>';
+    }else{
+      h+='<div class="rwhy">照下面的分步方案走：建议倍数 <b>'+state.rec.scale+'</b>，'
+        +'主方案走 <b>'+((state.rec.mode==='creative')?'Creative':'Precision')+' 模式</b>。'
+        +'如果放大后发现纹理被"规整"成了通用质感（细节变平滑、颗粒被抹掉），'
+        +'那正是 Hildegard 的强项 —— 换成它，用高 tile_weight + reduce 0 再跑一遍。</div>';
+    }
+  }
+
+  if(r.hasRoom===null){
+    h+='<div class="foot" style="margin-top:10px">没开本地视觉模型，所以判不出"这是不是室内场景图"'
+      +'—— 而这一条对路由影响最大。勾选左边的「本地视觉模型」后，这里会更准。</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function renderOutput(){
+  const R=state.rec, M=state.M, F=state.F, T=TYPE_MAP[state.type];
+  const mode=state.mode;
+  const isRec = (mode===R.mode);
+  const v=state.vals[mode];
+
+  const HINT_C={
+    optimized:'决定模型往哪个方向理解这张图。选错会让它按错误的审美去补细节。',
+    creativity:'越高，AI 补的细节越多、越"真"，但越可能偏离原图。人像别超过 2。',
+    hdr:'提升清晰度和细节，但过高会出现"人工感"和斑块。暗部多的图尤其要压住。',
+    resemblance:'越高越贴原图（但可能起斑/变脏），越低越自由（但会跑偏）。',
+    fractality:'每个像素上生成多少细节。出现竖向条纹就把它调低。',
+    engine:'illusio 偏平滑、适合插画并去 JPEG 痕迹；sharpy 最锐利但会制造假压缩痕迹；sparkle 居中且去痕迹。',
+    prompt:'用文字引导放大方向。AI 生成的图把原始提示词粘回来，效果提升最明显。括号加权 1–1.4，如 (young face:1.2)。'
+  };
+  const HINT_P={
+    model:'Sublime 最万用（4x 最强）；Photo 最保真（大幅照片 2x）；Photo denoiser 去噪；v1 High HDR 更"硬"、光晕更多。',
+    sharpness:'锐化边缘和材质。过高会出现"假锐"。',
+    grain:'7–12% 保留原始颗粒，最真实；0% 用于矢量图或要求无噪点。',
+    ultraDetail:'提升焦点和细节清晰度，过高会产生光晕和对比跳变。v2 (Sublime) 没有这一项。'
+  };
+
+  let html='';
+
+  /* 结论条 */
+  html+='<div class="verdict">'+
+    '<div style="flex:1">'+
+      '<div class="vt">'+T.n+' · 建议用 '+(R.mode==='creative'?'Creative 模式':'Precision 模式')+
+        (isRec?'':'（你正在看另一套）')+'</div>'+
+      '<div class="vd">自动判断为「'+TYPE_MAP[state.auto.key].n+'」· 置信度 '+state.auto.conf+
+        '　|　建议倍数：<b>'+R.scale+'</b></div>'+
+    '</div>'+
+    '<span class="conf '+(state.auto.conf==='高'?'high':state.auto.conf==='中'?'mid':'low')+'">置信度 '+state.auto.conf+'</span>'+
+  '</div>';
+
+  /* 引擎路由（放最前面：先决定用哪个工具，再谈参数） */
+  html+=renderRoute();
+
+  /* 分步方案 */
+  const planRow = p =>
+    '<div class="plan"><h4>'+p[0]+'<span class="badge '+(p[1]==='creative'?'c':'p')+'">'+
+      (p[1]==='creative'?'Creative':'Precision')+'</span></h4>'+
+    [p[2],p[3],p[4]].filter(l=>l).map(l=>'<div class="line">'+l+'</div>').join('')+
+    (p[5]?'<div class="why">'+p[5]+'</div>':'')+
+    '</div>';
+
+  html+='<div class="card"><h2>分步放大方案（推荐）</h2>';
+  R.plan.forEach(p=>{ html+=planRow(p); });
+  html+='<div class="foot">两步法的核心：<b>第一步只补结构、不添风格</b>（低 CREATIVITY + 高 RESEMBLANCE + Illusio），'+
+        '<b>第二步锐化定稿</b>（Sharpy）。若原图质量已经很好，单步放大就够了。<br>'+
+        '改参数时一次只动 1–2 个，方便判断是哪个起了作用。</div>';
+  html+='<div style="margin-top:14px"><div class="pname" style="margin-bottom:7px">备选：换成 '+
+        (R.mode==='creative'?'Precision':'Creative')+' 模式</div>';
+  R.altPlan.forEach(p=>{ html+=planRow(p); });
+  html+='</div></div>';
+
+  /* 模式切换 + 参数 */
+  html+='<div class="card"><h2>参数设置</h2>';
+  html+='<div class="tabs">'+
+    '<button class="tab'+(mode==='creative'?' on':'')+'" data-m="creative">Creative'+(R.mode==='creative'?'<span class="tag">推荐</span>':'')+'</button>'+
+    '<button class="tab'+(mode==='precision'?' on':'')+'" data-m="precision">Precision'+(R.mode==='precision'?'<span class="tag">推荐</span>':'')+'</button>'+
+  '</div>';
+
+  if(mode==='creative'){
+    const rc=R.creative, rec=R.creative;
+    html+=pselRow('optimized','OPTIMIZED FOR', v.optimized, OPT_LIST, rec.optimized, HINT_C.optimized, R.whyC.optimized||'');
+    html+=pvalRow('creativity','CREATIVITY', v.creativity, -10,10, rec.creativity, HINT_C.creativity, R.whyC.creativity||'');
+    html+=pvalRow('hdr','HDR', v.hdr, -10,10, rec.hdr, HINT_C.hdr, R.whyC.hdr||'');
+    html+=pvalRow('resemblance','RESEMBLANCE', v.resemblance, -10,10, rec.resemblance, HINT_C.resemblance, R.whyC.resemblance||'');
+    html+=pvalRow('fractality','FRACTALITY', v.fractality, -10,10, rec.fractality, HINT_C.fractality, R.whyC.fractality||'');
+    html+=pselRow('engine','ENGINE', v.engine, ['automatic','illusio','sharpy','sparkle'], rec.engine, HINT_C.engine, R.whyC.engine||'');
+    html+='<div class="param"><div class="ph"><span class="pname">PROMPT</span></div>'+
+      '<textarea id="promptBox">'+v.prompt.replace(/</g,'&lt;')+'</textarea>'+
+      '<div class="pr"><button data-reset="prompt">用推荐提示词</button><button id="copyPrompt">复制</button></div>'+
+      '<div class="phint">'+HINT_C.prompt+'</div></div>';
+  }else{
+    const rp=R.precision;
+    html+=pselRow('model','MODEL', v.model, MODEL_LIST, rp.model, HINT_P.model, R.whyP.model||'');
+    html+=pvalRow('sharpness','SHARPNESS', v.sharpness, 0,100, rp.sharpness, HINT_P.sharpness, R.whyP.sharpness||'');
+    html+=pvalRow('grain','GRAIN', v.grain, 0,100, rp.grain, HINT_P.grain, R.whyP.grain||'');
+    const noUD = (v.model==='v2 (Sublime)');
+    html+='<div class="param'+(noUD?'':'')+'" data-k="ultraDetail" id="udrow">'+
+      '<div class="ph"><span class="pname">ULTRA DETAIL</span><span class="pval">'+(noUD?'—':v.ultraDetail)+'</span></div>'+
+      (noUD?'<div class="phint" style="color:var(--warn)">当前 MODEL 是 <b>v2 (Sublime)</b>，这个版本没有 ULTRA DETAIL 选项。</div>'
+           :'<input type="range" min="0" max="100" step="1" value="'+v.ultraDetail+'" data-k="ultraDetail">'+
+            '<div class="pr"><span class="rec">推荐 '+rp.ultraDetail+'</span><button data-reset="ultraDetail">用推荐值</button></div>')+
+      '<div class="phint">'+HINT_P.ultraDetail+'</div></div>';
+  }
+  html+='<div class="btnrow"><button class="btn" id="resetAll">全部恢复推荐值</button>'+
+        '<button class="btn primary" id="copyAll">复制这套参数</button></div>';
+  html+='</div>';
+
+  /* 提示词（Precision 下也展示一份，方便切回） */
+  if(mode!=='creative'){
+    html+='<div class="card"><h2>切到 Creative 时的提示词</h2>'+
+      '<textarea id="promptBox2">'+R.creative.prompt.replace(/</g,'&lt;')+'</textarea>'+
+      '<div class="btnrow" style="margin-top:8px"><button class="btn" id="copyPrompt2">复制</button>'+
+      '<button class="btn" id="toCreative">切到 Creative 看完整参数</button></div></div>';
+  }
+
+  /* 注意事项 */
+  html+='<div class="card"><h2>注意事项</h2>';
+  if(!R.notes.length) html+='<div class="note">这张图没有检测到特别的风险点，按上面的参数走即可。</div>';
+  R.notes.forEach(n=>{ html+='<div class="note '+n[1]+'">'+n[0]+'</div>'; });
+  html+='<div class="note g">通用经验：<b>先小图试跑</b>。裁一块最有代表性的区域（比如人像的眼睛、壁画的接缝）用同一套参数试一次，确认没问题再放大整张。改参数时一次只动 1–2 个，方便判断是哪个起了作用。</div>';
+  html+='</div>';
+
+  $('#out').innerHTML=html;
+  bindOutput();
+}
+
+function bindOutput(){
+  document.querySelectorAll('.tab').forEach(el=>{
+    el.onclick=()=>{ state.mode=el.dataset.m; renderOutput(); };
+  });
+  document.querySelectorAll('input[type=range]').forEach(el=>{
+    el.oninput=()=>{ state.vals[state.mode][el.dataset.k]=parseInt(el.value,10); renderOutput(); };
+  });
+  document.querySelectorAll('select').forEach(el=>{
+    el.onchange=()=>{ state.vals[state.mode][el.dataset.k]=el.value; renderOutput(); };
+  });
+  const pb=$('#promptBox');
+  if(pb) pb.oninput=()=>{ state.vals.creative.prompt=pb.value; };
+  document.querySelectorAll('[data-reset]').forEach(el=>{
+    el.onclick=()=>{
+      const k=el.dataset.reset, m=state.mode;
+      if(k==='prompt') state.vals.creative.prompt=state.rec.creative.prompt;
+      else state.vals[m][k]=state.rec[m][k];
+      renderOutput();
+    };
+  });
+  const ra=$('#resetAll'); if(ra) ra.onclick=()=>{ resetVals(); renderOutput(); };
+  const cp=$('#copyPrompt'); if(cp) cp.onclick=()=>{ copyText($('#promptBox').value,'提示词已复制'); };
+  const cp2=$('#copyPrompt2'); if(cp2) cp2.onclick=()=>{ copyText($('#promptBox2').value,'提示词已复制'); };
+  const tc=$('#toCreative'); if(tc) tc.onclick=()=>{ state.mode='creative'; renderOutput(); };
+  const ca=$('#copyAll'); if(ca) ca.onclick=()=>copyText(summaryText(),'整套参数已复制');
+}
+
+function resetVals(){
+  state.vals.creative=Object.assign({}, state.rec.creative);
+  state.vals.precision=Object.assign({}, state.rec.precision);
+}
+
+function summaryText(){
+  const R=state.rec, T=TYPE_MAP[state.type], v=state.vals;
+  const L=[];
+  L.push('【Magnific 参数方案】');
+  L.push('图片：'+(state.meta?state.meta.name:'')+'　'+state.M.W+'×'+state.M.H+'（'+r2(state.M.mp)+' MP）');
+  L.push('内容类型：'+T.n+'（自动判断 '+TYPE_MAP[state.auto.key].n+'，置信度 '+state.auto.conf+'）');
+  if(vlm.result && vlm.applied){
+    const vr=vlm.result, same=(vr.type===state.auto.key);
+    L.push('本地模型：'+vr.scene+(vr.mockup?'　（室内场景图）':''));
+    L.push('　　　　　判断为「'+TYPE_MAP[vr.type].n+'」'
+      +(same?'（与程序判断一致）'
+           :(vr.rawType&&vr.rawType!==vr.type
+              ?'（模型原本判「'+TYPE_MAP[vr.rawType].n+'」，因画面里有房间而改用此预设）'
+              :'（覆盖了程序的「'+TYPE_MAP[state.auto.key].n+'」判断）')));
+    L.push('　　　　　画面特征：'+vr.tags.map(t=>VLM_TAG_SHORT[t]).join('、'));
+    if(vr.reason) L.push('　　　　　理由：'+vr.reason);
+  }else if(vlm.result && !vlm.applied){
+    L.push('本地模型：判断为「'+TYPE_MAP[vlm.result.type].n+'」，但当前未采用（仍按程序判断）');
+  }
+  L.push('建议倍数：'+R.scale);
+  L.push('');
+
+  /* 引擎路由 */
+  const rt=routeEngine(state.M,state.F,vlm.result||null);
+  const rtH=(rt.primary==='hildegard'), rtTie=(rt.primary==='tie');
+  L.push('— 引擎路由 —');
+  L.push('首选：'+(rtTie?'两边都行（Hildegard '+rt.H+' : '+rt.Mo+' Magnific）'
+                        :(rtH?'Hildegard':'Magnific')));
+  if(rtTie){
+    L.push('两边都行的理由：');
+    if(rt.whyH.length||rt.whyM.length){
+      rt.whyH.slice(0,2).forEach(w=>L.push('  · [Hildegard] '+w[1]));
+      rt.whyM.slice(0,2).forEach(w=>L.push('  · [Magnific] '+w[1]));
+    }else{
+      L.push('  · 两个引擎都没测出明显的短板或优势，按你更熟的来');
+    }
+  }else{
+    (rtH?rt.whyH:rt.whyM).slice(0,3).forEach(w=>L.push('  · '+w[1]));
+    if((rtH?rt.whyM:rt.whyH).length){
+      L.push('  另一边的理由：');
+      (rtH?rt.whyM:rt.whyH).slice(0,2).forEach(w=>L.push('  · '+w[1]));
+    }
+  }
+  if(rtH||rtTie){
+    L.push('');
+    L.push('Hildegard 起手参数（对着示例工作流改）：');
+    hildegardSetup(state.M,state.F).forEach(row=>L.push('  '+row[0]+' = '+row[1]+'　'+row[2]));
+    L.push('  要盯的地方：');
+    hildegardRisks(state.M,state.F).forEach(n=>L.push('  · '+n[1]));
+  }else{
+    const cav=magnificCaveat(state.M,state.F);
+    /* 纯文本通道：把 <b> 之类的标签去掉，否则复制出来会看到标签本身 */
+    if(cav) L.push('Magnific 这边的重点：'+cav[1].replace(/<[^>]+>/g,''));
+    const forcePrec=!!(cav && cav[0]==='b');
+    if(forcePrec){
+      L.push('倍数照下面的「分步放大方案」的 '+R.scale+'，但模式要改成 Precision'
+        +'（v2 Photo，RESEMBLANCE 8–9）—— 下面那套是 Creative，这张图别直接用');
+    }else{
+      L.push('照下面的分步方案走：建议倍数 '+R.scale+'，主方案走 '
+        +(R.mode==='creative'?'Creative':'Precision')+' 模式');
+    }
+  }
+  if(rt.hasRoom===null) L.push('（没开本地视觉模型，判不出是否室内场景图——这条对路由影响最大）');
+  L.push('');
+  L.push('— 分步方案（推荐）—');
+  R.plan.forEach(p=>{
+    L.push('【'+p[0]+' · '+(p[1]==='creative'?'Creative':'Precision')+'】');
+    if(p[2]) L.push('  '+p[2]);
+    if(p[3]) L.push('  '+p[3]);
+    if(p[5]) L.push('  → '+p[5]);
+  });
+  L.push('');
+  L.push('— 备选（'+(R.mode==='creative'?'Precision':'Creative')+' 模式）—');
+  R.altPlan.forEach(p=>{
+    L.push('【'+p[0]+' · '+(p[1]==='creative'?'Creative':'Precision')+'】');
+    if(p[2]) L.push('  '+p[2]);
+    if(p[3]) L.push('  '+p[3]);
+  });
+  L.push('');
+  L.push('— Creative 模式（当前值）—');
+  L.push('OPTIMIZED FOR：'+v.creative.optimized);
+  L.push('CREATIVITY：'+v.creative.creativity);
+  L.push('HDR：'+v.creative.hdr);
+  L.push('RESEMBLANCE：'+v.creative.resemblance);
+  L.push('FRACTALITY：'+v.creative.fractality);
+  L.push('ENGINE：'+v.creative.engine);
+  L.push('PROMPT：'+v.creative.prompt);
+  L.push('');
+  L.push('— Precision 模式（当前值）—');
+  L.push('MODEL：'+v.precision.model);
+  L.push('SHARPNESS：'+v.precision.sharpness);
+  L.push('GRAIN：'+v.precision.grain);
+  L.push('ULTRA DETAIL：'+(v.precision.model==='v2 (Sublime)'?'（该版本无此项）':v.precision.ultraDetail));
+  return L.join('\n');
+}
+
+function copyText(t,msg){
+  const done=()=>toast(msg||'已复制');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('复制失败，请手动选中'); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* 把模型的标签拼进提示词（代码负责措辞，模型只出标签） */
+function injectVlm(rec,res){
+  const all=(res.tags||[]);
+  if(res.mockup){
+    rec.notes.unshift(['本机模型认出这是<b>室内场景图</b>——画面里有房间、家具和透视，图案只是其中一块表面。'
+      +'所以 type 改按「这张图」来定（不是按墙上的图案），放大时要同时保住场景的自然感：'
+      +'如果墙面出现"塑料感"或者家具的质感变糊，就把 CREATIVITY 再降 1。','w']);
+  }
+  const tags=all.filter(t=>VLM_TAG_EN[t]).slice(0,4);
+  if(!tags.length) return;
+  const base=rec.creative.prompt;
+  const low=base.toLowerCase();
+  const parts=tags.filter(t=>low.indexOf(VLM_TAG_EN[t].toLowerCase())<0)
+    .map((t,i)=> i<VLM_WEIGHTS.length ? '('+VLM_TAG_EN[t]+':'+VLM_WEIGHTS[i]+')' : VLM_TAG_EN[t]);
+  if(!parts.length) return;
+  if(!/,\s*no\s/i.test(base))
+    parts.push(VLM_NEG[VLM_STYLISED.indexOf(res.type)>=0?'stylised':'photo']);
+  rec.creative.prompt = base + ', ' + parts.join(', ');
+  rec.vlmTags = tags;
+  rec.notes.unshift(['PROMPT 末尾追加了本机模型看图后选出的画面特征（'
+    + tags.map(t=>VLM_TAG_SHORT[t]).join('、')
+    +'）。觉得哪条不对，把提示词里对应的那一段删掉即可。','g']);
+}
+
+/* 重新计算全部并渲染 */
+function refresh(opts){
+  opts=opts||{};
+  state.F=buildFlags(state.M);
+  state.auto=guessType(state.M,state.F);
+  if(!state.type) state.type=state.auto.key;
+  state.rec=buildRec(state.type,state.M,state.F,state.auto);
+  if(vlm.result && vlm.applied) injectVlm(state.rec,vlm.result);
+  state.mode=state.rec.mode;
+  resetVals();
+  renderMetrics(); renderChips(); renderOutput(); renderVlmPanel();
+  if(vlm.enabled && !opts.noVlm && !vlm.tried && !vlm.busy && state.img){
+    vlm.tried=true;
+    runVlm();
+  }
+}
+
+/* ============================================================
+   七、本地视觉模型通道（可选）
+   分工：数值通道算物理量；模型只负责「看图 → 选类型 → 选标签」。
+   所有英文措辞由代码写死，模型只做选择题，避免它编造或抄袭措辞。
+============================================================ */
+const VLM_TYPE_KEYS=['portrait','nature','photo','chinese','oil','mural','illust',
+  'pattern','product','arch','render3d','game','scifi','film','screen'];
+const VLM_STYLISED=['chinese','oil','mural','illust','pattern','screen'];
+/* 模型自创的类型名直接映射回来，省掉一次重试 */
+const VLM_ALIAS={
+  'painting':'oil','paint':'oil','artwork':'oil','art':'oil','fine art':'oil',
+  'traditional painting':'chinese','ink':'chinese','chinese painting':'chinese',
+  'rendered':'render3d','render':'render3d','3d':'render3d','cg':'render3d','3d render':'render3d',
+  'wallpaper':'pattern','wall art':'mural','wallpaper pattern':'pattern',
+  'pattern design':'pattern','textile':'pattern','fabric':'pattern','tile':'pattern',
+  'illustration':'illust','drawing':'illust','anime':'illust','vector':'illust','cartoon':'illust',
+  'interior':'photo','room':'photo','photograph':'photo','realistic':'photo',
+  'interior photo':'photo','scene':'photo',
+  'landscape':'nature','scenery':'nature','nature photo':'nature','outdoor':'nature',
+  'architecture':'arch','building':'arch','portrait photo':'portrait',
+  'people':'portrait','person':'portrait','face':'portrait','model':'portrait',
+  'food':'product','still life':'product','product photo':'product',
+  'screenshot':'screen','ui':'screen','text':'screen','logo':'screen','graphic':'screen',
+  'science fiction':'scifi','horror':'scifi','sci-fi':'scifi',
+  'cinematic':'film','movie':'film','game asset':'game','game':'game','texture':'pattern'
+};
+/* 标签菜单：模型只选名字，英文措辞由代码提供。
+   四列：key / 中文长说明（给模型看）/ 英文短语（写进 PROMPT）/ 中文短标签（给界面看） */
+const VLM_TAGS=[
+  ['flat_colour_fields','平涂色块，没有照片式明暗过渡','flat even colour fields','平涂色块'],
+  ['line_art','以线条/轮廓为主','crisp line art','线条为主'],
+  ['fine_ornament','细密装饰纹样、重复单元','fine ornamental detail','细密纹样'],
+  ['printed_pigment','印刷或颜料的颗粒感','printed pigment texture','印刷颗粒'],
+  ['brushwork','能看到笔触','visible brushwork','可见笔触'],
+  ['paper_or_fabric','纸面 / 布面 / 丝绢底纹','paper or fabric ground texture','纸布底纹'],
+  ['soft_gradient','大面积柔和渐变','smooth soft gradients','柔和渐变'],
+  ['heavy_material','粗糙的真实材质（木、石、金属、织物）','real material surface texture','真实材质'],
+  ['grainy_texture','明显的颗粒或噪点','visible film grain','明显颗粒'],
+  ['text_or_ui','含文字、图标或界面元素','sharp letterforms','文字/界面'],
+  ['room_mockup','室内实景照 / 效果图：画面里有房间、家具、灯具、透视，图案只是贴在墙上的一部分','','室内场景图']
+];
+const VLM_TAG_EN={}, VLM_TAG_CN={}, VLM_TAG_SHORT={};
+VLM_TAGS.forEach(t=>{ VLM_TAG_EN[t[0]]=t[2]; VLM_TAG_CN[t[0]]=t[1]; VLM_TAG_SHORT[t[0]]=t[3]; });
+const VLM_WEIGHTS=[1.2,1.15];
+const VLM_NEG={stylised:'no photographic depth of field, no added realism, no plastic sheen',
+               photo:'no plastic smoothing, no sharpening halos, no added grain'};
+
+const vlm={enabled:false,url:'http://127.0.0.1:1234/v1/chat/completions',
+  model:'qwen2.5-vl-7b-instruct',auto:true,busy:false,result:null,error:null,
+  status:'',statusKind:'',ctx:null,applied:false,tried:false};
+
+function vlmSystemPrompt(){
+  const menu=VLM_TAGS.map(t=>'  '+t[0]+' = '+t[1]).join('\n');
+  return '你是 Magnific 放大参数助手。用户给你一张图 + 程序算好的客观指标。\n'
+   +'你看图，填下面这个 JSON 的槽位。\n\n'
+   +'{"has_room":false,"scene":"...","type":"...","tags":["..."],"reason":"..."}\n\n'
+   +'has_room   true / false。画面里有没有一个「室内空间」——地板、天花板、家具、灯具、窗、\n'
+   +'           墙脚线，或者能看出房间透视的墙面。图案贴在墙上、旁边有沙发茶几 → true。\n'
+   +'           只有图案 / 画作 / 花型本身、画面里没有房间 → false。\n'
+   +'scene      中文，15-30 字。按面积从大到小，写这张图里真实存在的主体和材质。\n'
+   +'type       只能从下面 15 个 key 里原样照抄一个：\n'
+   +'           portrait nature photo chinese oil mural illust pattern product arch\n'
+   +'           render3d game scifi film screen\n'
+   +'           （要选"油画/绘画"就填 oil，要选"3D渲染"就填 render3d，不要自己造词）\n'
+   +'tags       从下面 11 个标签里挑 1-4 个这张图确实符合的，只填标签名，原样照抄。\n'
+   +'           这张图不符合的标签一个都不要选。\n'+menu+'\n'
+   +'reason     中文一句话，说明为什么选这个 type 和这些 tags。\n\n'
+   +'★ 平涂类（type 是 chinese / oil / mural / illust / pattern / screen）不能选 heavy_material，\n'
+   +'  那是真实材质的标签，选了会让放大模型给平涂画面糊上一层照片质感。\n'
+   +'★ 画面里有房间（has_room=true）就一定要选 room_mockup 标签。\n\n'
+   +'只输出 JSON，不要解释，不要 markdown 代码块。';
+}
+
+function vlmMetricsText(M){
+  return '客观指标（程序算的，只读，不要复述、不要写进回答）：\n'
+   +'像素 '+M.W+'×'+M.H+'（'+r2(M.mp)+' MP）\n'
+   +'清晰度 '+M.sharp2.toFixed(2)+'（越高越锐）\n'
+   +'高频细节量 '+M.hfRatio.toFixed(3)+'\n'
+   +'高频纹理/噪点 '+M.noiseTxt.toFixed(2)+'\n'
+   +'JPEG 压缩痕迹 '+M.blockiness.toFixed(3)+'（>1.3 明显）\n'
+   +'色块集中度 '+(M.top32*100).toFixed(1)+'%（越高越像插画/矢量）\n'
+   +'边缘集中度 '+(M.edgeConc*100).toFixed(1)+'%\n'
+   +'平坦区占比 '+(M.flatRatio*100).toFixed(1)+'%\n'
+   +'重复周期 '+(M.perSharp<0.45&&M.perMin<0.16?('测到 '+M.perDx+'×'+M.perDy+' px'):'没测到')+'\n'
+   +'肤色占比 '+(M.skinRatio*100).toFixed(1)+'%（最大肤色块占全图 '+(M.skinBlobArea*100).toFixed(1)+'%）\n'
+   +'暖色连通块 '+M.skinBlobs+' 个（人脸一般 1-2 个；木地板/砖墙/暖色家具会有一大堆，别把木头当肤色）\n'
+   +'平均亮度 '+Math.round(M.meanLum)+' / 对比 '+Math.round(M.contrast)+'\n'
+   +'透明通道 '+(M.alphaRatio>0.008?'有':'无');
+}
+
+function vlmImageData(img,maxDim){
+  const s=Math.min(1,maxDim/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.max(1,Math.round(img.naturalWidth*s)), h=Math.max(1,Math.round(img.naturalHeight*s));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);   // JPEG 无透明通道，先垫白底
+  ctx.drawImage(img,0,0,w,h);
+  return c.toDataURL('image/jpeg',0.82).split(',')[1];
+}
+
+/* 少数标签有"一票否决"的客观证据，用数值把模型的误选挡掉。
+   只挡证据确凿的：文字/UI 必须有图形化或极高边缘集中度；颗粒必须真的测到噪点。 */
+const VLM_DROP_WHY={
+  text_or_ui:'画面里没有图形化的文字/界面特征（色块集中度和边缘集中度都不够高）',
+  grainy_texture:'实测噪点很低，画面里根本没有颗粒'
+};
+function vlmTagGuard(tags,M,F){
+  return (tags||[]).filter(t=>{
+    if(t==='text_or_ui') return F.graphic || M.edgeConc>0.45;
+    if(t==='grainy_texture') return M.noiseTxt>1.0;
+    return true;
+  });
+}
+
+function vlmNormTags(v){
+  if(typeof v==='string') v=v.split(/[,，、\s]+/);
+  const out=[],seen={};
+  (v||[]).forEach(t=>{
+    const k=String(t||'').trim().toLowerCase().replace(/[-\s]+/g,'_');
+    if(VLM_TAG_EN.hasOwnProperty(k) && !seen[k]){ seen[k]=1; out.push(k); }
+  });
+  return out;
+}
+function vlmResolveType(t){
+  let k=String(t||'').trim().toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+  if(VLM_TYPE_KEYS.indexOf(k)>=0) return k;
+  if(VLM_ALIAS[k]) return VLM_ALIAS[k];
+  /* 模型经常把词写残（illustr / portra / render3）。做一次唯一前缀匹配，
+     省掉一整轮重试——重试一次要多等好几秒，而且不一定答得更对。 */
+  if(k.length>=4){
+    const hits=[];
+    VLM_TYPE_KEYS.forEach(x=>{ if(x.indexOf(k)===0 || k.indexOf(x)===0) hits.push(x); });
+    if(hits.length===1) return hits[0];
+    const aHits=[];
+    for(const a in VLM_ALIAS){ if(a.indexOf(k)===0) aHits.push(VLM_ALIAS[a]); }
+    const uniq=aHits.filter((v,i)=>aHits.indexOf(v)===i);
+    if(uniq.length===1) return uniq[0];
+  }
+  return null;
+}
+function vlmValidate(d){
+  const t=vlmResolveType(d.type);
+  if(!t) return {kind:'type',msg:'type="'+d.type+'" 不在清单里也映射不了'};
+  d.type=t;
+  const tags=vlmNormTags(d.tags);
+  if(!tags.length) return {kind:'tags',msg:'一个有效标签都没有（要求 1-4 个）'};
+  if(VLM_STYLISED.indexOf(t)>=0 && tags.indexOf('heavy_material')>=0)
+    return {kind:'material',msg:'平涂类（'+t+'）不能选 heavy_material'};
+  if(typeof d.has_room!=='boolean')
+    return {kind:'has_room',msg:'has_room 不是 true/false：'+JSON.stringify(d.has_room)};
+  return {kind:null,msg:''};
+}
+function vlmFix(kind,d,msg){
+  if(kind==='tags') return '\n\n上一次你选的 tags 里一个有效的都没有。'
+    +'只能从这 11 个标签里原样照抄，至少挑 1 个（最好 2-4 个）：'+Object.keys(VLM_TAG_EN).join(' ')+'。重新答一次。';
+  if(kind==='material') return '\n\n上一次你给 type='+d.type+'（平涂画面）选了 heavy_material，'
+    +'那是真实材质的标签，会让放大模型给平涂画面糊上照片质感。去掉它，换成别的标签再答一次。';
+  if(kind==='has_room') return '\n\n上一次你的 has_room='+JSON.stringify(d.has_room)
+    +' 不是布尔值。必须填 true 或 false，JSON 布尔，不加引号。重新答一次。';
+  return '\n\n上一次你的 type="'+d.type+'" 不在清单里。只能从 15 个 key 里原样照抄一个，重新答一次。';
+}
+function vlmParse(raw){
+  const m=String(raw||'').match(/\{[\s\S]*\}/);
+  if(!m) return null;
+  try{ return JSON.parse(m[0]); }catch(e){ return null; }
+}
+/* 代码拼装提示词：标签 → 英文短语（前两条加权）+ 媒介对应的负面词 */
+function vlmAssembleTags(tags,type){
+  const list=(tags||[]).filter(t=>VLM_TAG_EN[t]).slice(0,4);
+  const parts=list.map((t,i)=> i<VLM_WEIGHTS.length
+      ? '('+VLM_TAG_EN[t]+':'+VLM_WEIGHTS[i]+')' : VLM_TAG_EN[t]);
+  parts.push(VLM_NEG[VLM_STYLISED.indexOf(type)>=0?'stylised':'photo']);
+  return parts.join(', ');
+}
+
+async function vlmFetch(body,timeoutMs){
+  const ctl=new AbortController();
+  const timer=setTimeout(()=>ctl.abort(),timeoutMs||150000);
+  try{
+    const res=await fetch(vlm.url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body),signal:ctl.signal});
+    if(!res.ok) throw new Error('HTTP '+res.status+' '+res.statusText);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+async function vlmAsk(img,M,hist){
+  const msgs=[{role:'system',content:vlmSystemPrompt()},
+    {role:'user',content:[{type:'text',text:vlmMetricsText(M)},
+      {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+vlmImageData(img,768)}}]}];
+  (hist||[]).forEach(h=>msgs.push({role:h[0],content:h[1]}));
+  const j=await vlmFetch({model:vlm.model,messages:msgs,temperature:0.2,max_tokens:800,stream:false});
+  const ch=j.choices&&j.choices[0];
+  if(!ch) throw new Error('返回结构异常：'+(JSON.stringify(j).slice(0,180)));
+  return {text:String(ch.message.content||'').trim(),finish:ch.finish_reason};
+}
+function vlmTruncated(t){
+  return (t.match(/\{/g)||[]).length>(t.match(/\}/g)||[]).length || (t.match(/"/g)||[]).length%2===1;
+}
+
+async function runVlm(){
+  if(!state.img||vlm.busy) return;
+  vlm.busy=true; vlm.error=null; vlm.result=null; vlm.applied=false;
+  vlm.status='正在让本机模型看图…'; vlm.statusKind='';
+  renderVlmPanel();
+  try{
+    let r=await vlmAsk(state.img,state.M);
+    let d=vlmParse(r.text);
+    if(!d){
+      if(vlmTruncated(r.text)) throw new Error('模型输出被截断（JSON 没写完）。多半是 LM Studio 的 Context Length 太小，'
+        +'把它调到 8192 以上再试。');
+      throw new Error('模型没返回 JSON。原始输出：'+r.text.slice(0,200));
+    }
+    let v=vlmValidate(d);
+    if(v.kind){
+      vlm.status='第一次不合格（'+v.msg+'），正在重试…'; renderVlmPanel();
+      r=await vlmAsk(state.img,state.M,[['assistant',r.text],['user',vlmFix(v.kind,d,v.msg)]]);
+      const d2=vlmParse(r.text);
+      if(!d2) throw new Error('重试后仍拿不到 JSON。原始输出：'+r.text.slice(0,200));
+      const v2=vlmValidate(d2);
+      if(v2.kind) throw new Error('重试后仍不合格：'+v2.msg);
+      d=d2;
+    }
+    const rawTags=vlmNormTags(d.tags);
+    const tags=vlmTagGuard(rawTags,state.M,state.F);
+    const dropped=rawTags.filter(t=>tags.indexOf(t)<0);
+    /* 模型有时会把「类型名」当「标签名」填进来（比如把 pattern / oil 填进 tags）。
+       这些名字压根不是标签，单独记下来，界面上说清楚，别让用户以为是程序弄丢了。 */
+    const notTags=[];
+    (Array.isArray(d.tags)?d.tags:(typeof d.tags==='string'?d.tags.split(/[,，、\s]+/):[]))
+      .forEach(t=>{
+        const k=String(t||'').trim().toLowerCase().replace(/[-\s]+/g,'_');
+        if(k && !VLM_TAG_EN.hasOwnProperty(k) && notTags.indexOf(String(t).trim())<0) notTags.push(String(t).trim());
+      });
+    /* 室内场景图（has_room=true）：type 要描述「这张图」，不是描述「墙上的图案」。
+       - 判成人像 → 场景里没有主角脸，改 photo
+       - 判成平涂类（国画/油画/插画/图案/截图）→ 图案只是场景里的一块表面，改 mural
+       - 判成 render3d / photo / arch / mural → 保留模型自己的判断 */
+    const mockup = d.has_room===true;
+    let eff=d.type;
+    if(mockup){
+      if(eff==='portrait') eff='photo';
+      else if(eff==='chinese'||eff==='oil'||eff==='illust'||eff==='pattern'||eff==='screen') eff='mural';
+    }
+    vlm.result={scene:String(d.scene||'').trim(),type:eff,rawType:d.type,mockup:mockup,
+      tags:tags,dropped:dropped,notTags:notTags,reason:String(d.reason||'').trim(),raw:d};
+    vlm.status=''; vlm.statusKind='';
+    if(vlm.auto){ vlm.applied=true; state.type=eff; }
+  }catch(e){
+    vlm.status=''; vlm.statusKind='';        // 别把"正在看图…"留在状态栏里骗人
+    if(e.name==='AbortError'){
+      vlm.error='请求超时（150 秒）。模型可能正在加载，或这张图太大。';
+    }else if(e instanceof TypeError || /Failed to fetch|NetworkError|load failed/i.test(e.message||'')){
+      vlm.error='连不上本机模型接口 '+vlm.url+'<br>请检查：① LM Studio 已启动 '
+        +'② 左侧 Developer → Start Server 已打开 ③ 服务器设置里 Enable CORS 已勾选。'
+        +'<br>这个工具是本地 file:// 打开的，浏览器会拦截没开 CORS 的本地接口。';
+    }else{
+      vlm.error=e.message||String(e);
+    }
+  }finally{
+    vlm.busy=false;
+    if(vlm.result) refresh({noVlm:true}); else { renderVlmPanel(); }
+  }
+}
+
+async function vlmTestConn(){
+  vlm.status='正在测试…'; vlm.statusKind=''; renderVlmPanel();
+  try{
+    const root=vlm.url.replace(/\/v1\/.*$/,'');
+    const res=await fetch(root+'/api/v0/models');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const j=await res.json();
+    const want=vlm.model.split(':')[0].trim().toLowerCase();
+    let hit=null,anyLoaded=[];
+    (j.data||[]).forEach(m=>{
+      if(m.state==='loaded') anyLoaded.push(m);
+      if(String(m.id||'').split(':')[0].trim().toLowerCase()===want) hit=m;
+    });
+    if(!hit && anyLoaded.length) hit=anyLoaded.sort((a,b)=>
+      (b.loaded_context_length||0)-(a.loaded_context_length||0))[0];
+    if(!hit){
+      vlm.status='连上了 LM Studio，但模型「'+vlm.model+'」没有加载。请先在 LM Studio 里加载它。';
+      vlm.statusKind='warn'; vlm.ctx=null;
+    }else{
+      const ctx=hit.loaded_context_length||0;
+      vlm.ctx=ctx;
+      const warn = ctx && ctx<8192 ? '　⚠ 上下文只有 '+ctx+'，建议调到 8192 以上（在加载参数里改，不是右侧推理侧栏）' : '';
+      vlm.status='连接正常。模型 '+hit.id+'　已加载上下文 '+ctx+(ctx?'':'(未知)')+warn;
+      vlm.statusKind = ctx && ctx<8192 ? 'warn' : 'ok';
+      if(!vlm.model || vlm.model!==hit.id) vlm.model=hit.id;
+    }
+  }catch(e){
+    vlm.status='连不上 '+vlm.url+'　（'+(e.message||e)+'）<br>请检查：① LM Studio 已启动 '
+      +'② 左侧 Developer → Start Server 已打开 ③ 服务器设置里 Enable CORS 已勾选。'
+      +'<br>注意：这个工具是本地 file:// 打开的，浏览器会拦截没开 CORS 的本地接口。';
+    vlm.statusKind='err'; vlm.ctx=null;
+  }
+  renderVlmPanel();
+}
+
+function renderVlmPanel(){
+  const body=$('#vlmBody'), st=$('#vlmStatus'), rs=$('#vlmResult');
+  if(!body) return;
+  body.style.display = vlm.enabled?'block':'none';
+  $('#vlmOn').checked=vlm.enabled;
+  $('#vlmAuto').checked=vlm.auto;
+  $('#vlmUrl').value=vlm.url;
+  $('#vlmModel').value=vlm.model;
+  st.className='vstatus '+(vlm.statusKind||'');
+  st.innerHTML = vlm.busy ? '<span class="spin"></span> '+(vlm.status||'正在看图…') : (vlm.status||'');
+  let h='';
+  if(vlm.error){
+    h+='<div class="note b" style="margin-top:8px"><span class="ic">!</span><div>'+vlm.error+'</div></div>';
+  }
+  if(vlm.result){
+    const r=vlm.result, auto=state.auto?state.auto.key:null;
+    const diff = auto && auto!==r.type;
+    h+='<div class="vbox">';
+    h+='<div class="k">模型看到的是</div><div class="v">'+ (r.scene||'（没写）') +'</div>';
+    h+='<div class="k">模型判断的类型</div><div class="v"><b>'+TYPE_MAP[r.type].n+'</b>'
+      + (diff ? '　<span class="foot" style="display:inline">（程序判断是「'+TYPE_MAP[auto].n+'」，已按模型的判断切换）</span>' : '')
+      +'</div>';
+    if(r.mockup){
+      h+='<div class="v" style="margin-top:4px"><span class="vtag">室内场景图</span>'
+        +(r.rawType&&r.rawType!==r.type
+            ? '　模型原本判为「'+TYPE_MAP[r.rawType].n+'」，但画面里有房间——'
+              +'图案只是场景里的一块表面，所以改用 <b>'+TYPE_MAP[r.type].n+'</b> 预设。'
+              +'（如果你要的是只抠墙上图案的细节，可以在上面的类型里手动点回「'+TYPE_MAP[r.rawType].n+'」。）'
+            : '　画面里有房间，放大时要同时保住场景的自然感，别只盯着图案。')
+        +'</div>';
+    }
+    h+='<div class="k">画面特征标签</div><div class="v">'
+      + (r.tags.length ? r.tags.map(t=>'<span class="vtag">'+VLM_TAG_SHORT[t]+'</span>').join('')
+                       : '<span class="foot">（模型给的标签都被客观指标挡掉了）</span>')
+      +'</div>';
+    if(r.dropped && r.dropped.length){
+      h+='<div class="v foot" style="margin-top:2px">模型还选了 '
+        + r.dropped.map(t=>'<span class="vtag">'+VLM_TAG_SHORT[t]+'</span>').join('')
+        +'，但已忽略：'
+        + r.dropped.map(t=>VLM_TAG_SHORT[t]+' —— '+(VLM_DROP_WHY[t]||'与实测指标对不上')).join('；')
+        +'。这类误选直接写进提示词，会让放大模型朝错误方向使劲，所以宁可不要。</div>';
+    }
+    if(r.notTags && r.notTags.length){
+      h+='<div class="v foot" style="margin-top:2px">模型还填了 '
+        + r.notTags.map(t=>'<span class="vtag">'+t+'</span>').join('')
+        +'，但那些是「内容类型」的名字，不是「画面特征」的标签，已忽略。</div>';
+    }
+    if(r.reason) h+='<div class="k">理由</div><div class="v">'+r.reason+'</div>';
+    h+='<div class="k">模型给出的提示词片段（已拼进上面的 PROMPT）</div>'
+      +'<div class="v mono">'+vlmAssembleTags(r.tags,r.type)+'</div>';
+    h+='<div class="btnrow">';
+    if(!vlm.applied) h+='<button class="btn primary" id="vlmApply" style="font-size:12px;padding:6px 12px">用模型的判断</button>';
+    h+='<button class="btn" id="vlmRevert" style="font-size:12px;padding:6px 12px">改回程序判断</button>';
+    h+='<button class="btn" id="vlmRerun" style="font-size:12px;padding:6px 12px">重新识别</button>';
+    h+='</div></div>';
+  }else if(vlm.enabled && !vlm.busy && !vlm.error && state.img){
+    h+='<div class="foot" style="margin-top:8px">还没有识别结果。<button class="btn" id="vlmRun" style="font-size:12px;padding:5px 11px">现在识别</button></div>';
+  }
+  rs.innerHTML=h;
+  const on=$('#vlmRun'); if(on) on.onclick=()=>runVlm();
+  const ap=$('#vlmApply'); if(ap) ap.onclick=()=>{ vlm.applied=true; state.type=vlm.result.type; refresh({noVlm:true}); };
+  const rv=$('#vlmRevert'); if(rv) rv.onclick=()=>{ vlm.applied=false; state.type=state.auto.key; refresh({noVlm:true}); };
+  const rr=$('#vlmRerun'); if(rr) rr.onclick=()=>runVlm();
+}
+
+/* ============================================================
+   八、载入图片
+============================================================ */
+function loadFile(file){
+  if(!file || !/^image\//.test(file.type)){ toast('请选择图片文件'); return; }
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    state.img=img; state.meta={name:file.name,size:file.size,type:file.type};
+    $('#pimg').src=url;
+    $('#preview').style.display='block';
+    $('#fileinfo').textContent=file.name+'　·　'+img.naturalWidth+'×'+img.naturalHeight+
+      '　·　'+(file.size/1048576).toFixed(2)+' MB';
+    $('#pimg').onclick=()=>{
+      state.actual=!state.actual;
+      $('#preview').classList.toggle('actual',state.actual);
+      $('#pvwrap').classList.toggle('actual',state.actual);
+      toast(state.actual?'按原始像素显示（可滚动）':'已缩放显示');
+    };
+    try{
+      state.M=analyzeImage(img);
+    }catch(e){
+      $('#out').innerHTML='<div class="card"><div class="note b">读取像素失败：'+e.message+
+        '<br>如果图片是从网页直接拖进来的，请先保存到本地，再用上面的「点击选择图片」载入。</div></div>';
+      return;
+    }
+    state.type=null;
+    vlm.tried=false; vlm.result=null; vlm.error=null; vlm.applied=false;
+    vlm.status=''; vlm.statusKind='';
+    refresh();
+    $('#mcard').style.display='block';
+    $('#tcard').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  img.onerror=()=>toast('图片读取失败，换个格式试试（JPG / PNG / WebP）');
+  img.src=url;
+}
+
+/* 事件绑定 */
+const drop=$('#drop');
+drop.onclick=()=>$('#file').click();
+$('#file').onchange=e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); };
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) loadFile(f); });
+document.addEventListener('paste',e=>{
+  const items=e.clipboardData&&e.clipboardData.items; if(!items) return;
+  for(const it of items){ if(it.type.indexOf('image')===0){ const f=it.getAsFile(); if(f){ loadFile(f); e.preventDefault(); } break; } }
+});
+
+/* 本地模型面板：设置持久化 + 事件绑定 */
+const VLM_LS='magnific_vlm_cfg';
+(function initVlm(){
+  try{
+    const s=JSON.parse(localStorage.getItem(VLM_LS)||'null');
+    if(s){
+      if(typeof s.enabled==='boolean') vlm.enabled=s.enabled;
+      if(typeof s.auto==='boolean') vlm.auto=s.auto;
+      if(s.url) vlm.url=s.url;
+      if(s.model) vlm.model=s.model;
+    }
+  }catch(e){}
+  renderVlmPanel();
+})();
+function vlmSave(){
+  try{ localStorage.setItem(VLM_LS,JSON.stringify({enabled:vlm.enabled,auto:vlm.auto,url:vlm.url,model:vlm.model})); }catch(e){}
+}
+$('#vlmOn').onchange=e=>{
+  vlm.enabled=e.target.checked; vlmSave();
+  renderVlmPanel();
+  if(vlm.enabled && state.img && !vlm.tried && !vlm.busy){ vlm.tried=true; runVlm(); }
+};
+$('#vlmAuto').onchange=e=>{
+  vlm.auto=e.target.checked; vlmSave();
+  if(vlm.result){ vlm.applied=vlm.auto; state.type=vlm.auto?vlm.result.type:state.auto.key; refresh({noVlm:true}); }
+  else renderVlmPanel();
+};
+$('#vlmUrl').oninput=e=>{ vlm.url=e.target.value.trim()||vlm.url; vlmSave(); };
+$('#vlmModel').oninput=e=>{ vlm.model=e.target.value.trim()||vlm.model; vlmSave(); };
+$('#vlmTest').onclick=()=>vlmTestConn();
+</script>
+</body>
+</html>
